@@ -7,9 +7,10 @@ FPS = 60
 # =========================
 # ゲーム
 # =========================
-GAME_SCREEN_OFFSET = (350, 30) # ゲームフィールドのオフセット
-GRID_NUM = (10, 20)     # マスの数
-BLOCK_SIZE = (30, 30)   # ブロックサイズ
+GAME_SCREEN_OFFSET = (320, 0) # ゲームフィールドのオフセット
+GRID_NUM = (12, 22)      # マスの数
+START_MINO_GRID = (4, 0) # ミノの出現位置（左上のマス）
+BLOCK_SIZE = (30, 30)    # ブロックサイズ
 DEFAULT_FALL_SPEED = 48  # 何フレーム間隔で降下するか
 LEVEL_UP_COUNT = 10      # 何段ミノを消したらレベルが上がるか
 SPEED_UP_INTERVAL = 1    # レベルアップ時の速度上昇量
