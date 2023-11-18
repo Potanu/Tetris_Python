@@ -22,7 +22,7 @@ class GameScene(sceneBase.SceneBase):
     
     def draw(self):
         grid_num_x = define.GRID_NUM[0] - 2
-        grid_num_y = define.GRID_NUM[1] - 1
+        grid_num_y = define.GRID_NUM[1] - 2
         offset_pos_x = define.GAME_SCREEN_OFFSET[0] + define.BLOCK_SIZE[0]
         offset_pos_y = define.GAME_SCREEN_OFFSET[1]
         

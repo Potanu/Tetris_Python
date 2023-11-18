@@ -61,7 +61,7 @@ class GameManager:
         
         def check_fall():
             for y in reversed(range(0, len(mino_matrix))):
-                for x in range(0, len(mino_matrix)):
+                for x in range(0, len(mino_matrix[0])):
                     index_x = next_mino_grid[0] + x
                     index_y = next_mino_grid[1] + y
                     if mino_matrix[y][x] == [0]:
@@ -122,7 +122,7 @@ class GameManager:
                     if mino_type <= enum.MinoType.NONE:
                         continue
                     pos_x = define.GAME_SCREEN_OFFSET[0] + define.BLOCK_SIZE[0] * x
-                    pos_y = define.GAME_SCREEN_OFFSET[1] + define.BLOCK_SIZE[1] * y
+                    pos_y = define.GAME_SCREEN_OFFSET[1] + define.BLOCK_SIZE[1] * y - define.BLOCK_SIZE[1]
                     block_tuple = (enum.ObjectType.OBJECT, 0, enum.DrawType.RECT, -1, define.MINO_COLOR_STR[mino_type],
                                 pygame.Rect(pos_x + 1, pos_y + 1, define.BLOCK_SIZE[0] - 2, define.BLOCK_SIZE[1] - 2), -1, -1, -1)
                     sceneManager.SceneManager().add_draw_queue(block_tuple)
