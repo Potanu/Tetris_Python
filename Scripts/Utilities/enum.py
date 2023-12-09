@@ -40,6 +40,10 @@ class KeyType(IntEnum):
     A = pygame.K_a,
     S = pygame.K_s,
     D = pygame.K_d,
+    Q = pygame.K_q,
+    E = pygame.K_e,
+    P = pygame.K_p,
+    H = pygame.K_h,
     UP = pygame.K_UP,
     DOWN = pygame.K_DOWN,
     RIGHT = pygame.K_RIGHT,
@@ -56,6 +60,14 @@ class MinoType(IntEnum):
     J = 5,
     L = 6,
     T = 7
+
+# ミノの動き
+class MinoMoveType(Enum):
+    MOVE_RIGHT = 0,     # 右移動
+    MOVE_LEFT = 1,      # 左移動
+    ROTATE_RIGHT = 2,   # 右回転
+    ROTATE_LEFT = 3,    # 左回転
+    FALL = 4            # １マス降下
 
 # ゲームの状態
 class GameState(Enum):

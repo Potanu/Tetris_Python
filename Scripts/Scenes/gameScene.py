@@ -1,8 +1,6 @@
 import pygame
-
 from Utilities import enum
 from Utilities import define
-from Utilities import pygameEventManager
 from Scenes import sceneBase
 from Scenes import sceneManager
 from Scenes import gameManager

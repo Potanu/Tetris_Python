@@ -33,18 +33,28 @@ class Mino():
         else:
             self.fall_counter += 1
             return False
-
-    def fall_mino(self):
-        self.left_upper_grid = (self.left_upper_grid[0], self.left_upper_grid[1] + 1)
     
-    def rotate_right(self):
-        self.index = 0 if len(self.matrix) <= self.index + 1 else \
-            self.clamp(self.index + 1, 0, len(self.matrix) - 1)
+    def move_mino(self, move_type):
+        match move_type:
+            case enum.MinoMoveType.MOVE_RIGHT:
+                self.left_upper_grid = (self.left_upper_grid[0] + 1, self.left_upper_grid[1])
+            case enum.MinoMoveType.MOVE_LEFT:
+                self.left_upper_grid = (self.left_upper_grid[0] - 1, self.left_upper_grid[1])
+            case enum.MinoMoveType.ROTATE_RIGHT:
+                self.index = self.get_next_index(1)
+            case enum.MinoMoveType.ROTATE_LEFT:
+                self.index = self.get_next_index(-1)
+            case enum.MinoMoveType.FALL:
+                self.left_upper_grid = (self.left_upper_grid[0], self.left_upper_grid[1] + 1)
     
-    def rotate_left(self):
-         self.index = len(self.matrix) - 1 if self.index == 0 else \
-             self.clamp(self.index - 1, 0, len(self.matrix) - 1)
-    
+    def get_next_index(self, add_num):
+        index = self.index + add_num
+        if index < 0:
+            index = len(self.matrix) - 1
+        elif len(self.matrix) <= index:
+            index = 0
+        return index
+        
     # どこかに汎用的なメソッドとしてまとめた方が良いかもしれない
     def clamp(self, value, min_num, max_num):
         return max(min_num, min(value, max_num))

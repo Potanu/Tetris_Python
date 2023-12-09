@@ -22,6 +22,7 @@ class GameManager:
     def update(self):
         self.active_func()
         self.draw()
+        self.draw_debug()
     
     def ready(self):
         self.change_state(enum.GameState.GAME)
@@ -33,8 +34,8 @@ class GameManager:
             self.change_state(enum.GameState.PAUSE)
             
     def pause(self):
-        if pygameEventManager.PygameEventManager().is_up(enum.KeyType.S):
-            self.change_state(enum.GameState.GAME_OVER)
+        if pygameEventManager.PygameEventManager().is_up(enum.KeyType.P):
+            self.change_state(enum.GameState.GAME)
             
     def game_over(self):
         if pygameEventManager.PygameEventManager().is_up(enum.KeyType.S):
@@ -49,36 +50,84 @@ class GameManager:
             self.create_mino()
             return
         
-        is_fall = self.active_mino.check_fall(self.fall_speed)
-        if not is_fall:
+        if self.check_key_input():
+            # 何らかのキーアクションが発生したら処理を抜けることにする
+            return
+        
+        self.fall_mino()
+    
+    def check_key_input(self):
+        if (pygameEventManager.PygameEventManager().is_up(enum.KeyType.D)
+            or pygameEventManager.PygameEventManager().is_up(enum.KeyType.RIGHT)):
+            next_mino_grid = (self.active_mino.left_upper_grid[0] + 1, self.active_mino.left_upper_grid[1])
+            if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
+                # 右移動
+                self.active_mino.move_mino(enum.MinoMoveType.MOVE_RIGHT)
+                self.update_fall_mino_matrix()
+        elif (pygameEventManager.PygameEventManager().is_up(enum.KeyType.A)
+            or pygameEventManager.PygameEventManager().is_up(enum.KeyType.LEFT)):
+            next_mino_grid = (self.active_mino.left_upper_grid[0] - 1, self.active_mino.left_upper_grid[1])
+            if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
+                # 左移動
+                self.active_mino.move_mino(enum.MinoMoveType.MOVE_LEFT)
+                self.update_fall_mino_matrix()
+        elif pygameEventManager.PygameEventManager().is_up(enum.KeyType.E):
+            if self.check_object(self.active_mino.matrix[self.active_mino.get_next_index(1)], self.active_mino.left_upper_grid):
+                # 右回転
+                self.active_mino.move_mino(enum.MinoMoveType.ROTATE_RIGHT)
+                self.update_fall_mino_matrix()
+        elif pygameEventManager.PygameEventManager().is_up(enum.KeyType.Q):
+            if self.check_object(self.active_mino.matrix[self.active_mino.get_next_index(-1)], self.active_mino.left_upper_grid):
+                # 左回転
+                self.active_mino.move_mino(enum.MinoMoveType.ROTATE_LEFT)
+                self.update_fall_mino_matrix()
+        elif pygameEventManager.PygameEventManager().is_up(enum.KeyType.P):
+            self.change_state(enum.GameState.GAME_OVER)
+        else:
+            return False
+        
+        return True
+    
+    # ミノの降下処理
+    def fall_mino(self):
+        if not self.active_mino.check_fall(self.fall_speed):
             # 降下タイミングでは無いので処理を抜ける
             return
         
         # 降下可能かチェック
         next_mino_grid = (self.active_mino.left_upper_grid[0], self.active_mino.left_upper_grid[1] + 1)
-        tmp_fall_mino_matrix = self.clean_matrix()
-        mino_matrix = self.active_mino.matrix[self.active_mino.index].copy()
-        
-        def check_fall():
-            for y in reversed(range(0, len(mino_matrix))):
-                for x in range(0, len(mino_matrix[0])):
-                    index_x = next_mino_grid[0] + x
-                    index_y = next_mino_grid[1] + y
-                    if mino_matrix[y][x] == [0]:
-                        continue
-                    elif self.board_matrix[index_y][index_x] == 0:
-                        tmp_fall_mino_matrix[index_y][index_x] = self.active_mino.mino_type
-                        continue
-                    return False
-            return True
-        
-        if check_fall():
-            self.active_mino.fall_mino()
-            self.fall_mino_matrix = tmp_fall_mino_matrix.copy()
+        if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
+            # 降下
+            self.active_mino.move_mino(enum.MinoMoveType.FALL)
+            self.update_fall_mino_matrix()
         else:
+            # 接地
             self.board_matrix = np.where(self.board_matrix != 0, self.board_matrix, self.fall_mino_matrix)
             self.fall_mino_matrix = self.clean_matrix()
             self.active_mino = None
+    
+    # 当たり判定チェック(なければTrue)
+    def check_object(self, next_mino_matrix, next_mino_grid):
+        for y in reversed(range(0, len(next_mino_matrix))):
+            for x in range(0, len(next_mino_matrix[0])):
+                index_x = next_mino_grid[0] + x
+                index_y = next_mino_grid[1] + y
+                if next_mino_matrix[y][x] == [0] or self.board_matrix[index_y][index_x] == 0:
+                    continue
+                return False
+        return True
+    
+    # 降下中ミノの情報更新
+    def update_fall_mino_matrix(self):
+        self.fall_mino_matrix = self.clean_matrix()
+        mino_matrix = self.active_mino.matrix[self.active_mino.index].copy()
+        for y in reversed(range(0, len(mino_matrix))):
+            for x in range(0, len(mino_matrix[0])):
+                index_x = self.active_mino.left_upper_grid[0] + x
+                index_y = self.active_mino.left_upper_grid[1] + y
+                if mino_matrix[y][x] == [0]:
+                    continue
+                self.fall_mino_matrix[index_y][index_x] = self.active_mino.mino_type
     
     def clean_matrix(self):
         return np.full((define.GRID_NUM[1], define.GRID_NUM[0]), enum.MinoType.NONE)
@@ -129,4 +178,20 @@ class GameManager:
                 
         draw_matrix(self.board_matrix)
         draw_matrix(self.fall_mino_matrix)
+    
+    def draw_debug(self):
+        if not sceneManager.SceneManager().is_debug:
+            return
+        def draw_matrix(matrix, pos):
+            font = pygame.font.Font(None, 12)
+            for y in range(0, len(matrix)):
+                for x in range(0, len(matrix[0])):
+                    color = "#000000" if 0 < matrix[y][x] else "#FFFFFF"
+                    gTxt = font.render(str(matrix[y][x]), True, color)
+                    start_pos = [define.GAME_SCREEN_OFFSET[0] + (x * define.BLOCK_SIZE[0]) + pos[0],
+                                 define.GAME_SCREEN_OFFSET[1] + ((y - 1) * define.BLOCK_SIZE[1]) + pos[1]]
+                    text_tuple = (enum.ObjectType.DEBUG, 0, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
+                    sceneManager.SceneManager().add_draw_queue(text_tuple)
         
+        draw_matrix(self.board_matrix, (4, 22.0))
+        draw_matrix(self.fall_mino_matrix, (24.0, 22.0))

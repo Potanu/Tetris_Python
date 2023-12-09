@@ -1,5 +1,4 @@
 import pygame
-
 from Utilities import singleton
 
 class PygameEventManager(singleton.Singleton):
