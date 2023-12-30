@@ -4,7 +4,7 @@ from pygame.locals import *
 from Utilities import singleton
 from Utilities import enum
 from Utilities import define
-from Utilities import pygameEventManager
+from Utilities import pygameManager
 from Scenes import titleScene
 from Scenes import gameScene
 
@@ -25,8 +25,8 @@ class SceneManager(singleton.Singleton):
     
   def run(self):
     while True:
-      pygameEventManager.PygameEventManager().get_events()
-      if pygameEventManager.PygameEventManager().get_event(QUIT):
+      pygameManager.PygameManager().get_events()
+      if pygameManager.PygameManager().get_event(QUIT):
           break
       
       # 画面更新
@@ -39,6 +39,7 @@ class SceneManager(singleton.Singleton):
     pygame.quit()
       
   def draw(self):
+    self.screen.fill("#000000") # 画面のクリア
     self.draw_queue.sort(key = lambda x: (x[enum.DrawData.OBJECT_TYPE], x[enum.DrawData.Z_ORDER]))
     for data in self.draw_queue:
       object_type, z_order, draw_type, image, color, rect, start_pos, end_pos, width = data
@@ -47,10 +48,16 @@ class SceneManager(singleton.Singleton):
           self.screen.blit(image, start_pos) 
         case enum.DrawType.RECT:
           pygame.draw.rect(self.screen, color, rect)
+        case enum.DrawType.RECT_ALPHA:
+          surface = pygame.Surface(rect.size, pygame.SRCALPHA)
+          surface.fill(color)
+          self.screen.blit(surface, rect)
         case enum.DrawType.LINE:
           pygame.draw.line(self.screen, color, start_pos, end_pos, width) 
         case enum.DrawType.FILL:
-          self.screen.fill(color)
+          surface = pygame.Surface(define.SCREEN_SIZE, pygame.SRCALPHA)
+          surface.fill(color)
+          self.screen.blit(surface, (0, 0))
     pygame.display.flip()
     self.draw_queue.clear()
     self.debug_text_count = 0
@@ -69,7 +76,7 @@ class SceneManager(singleton.Singleton):
         return gameScene.GameScene()
     
   def debug(self):
-    if pygameEventManager.PygameEventManager().is_up(enum.KeyType.DEBUG):
+    if pygameManager.PygameManager().is_up(enum.KeyType.DEBUG):
       self.is_debug = not self.is_debug
     
     # FPS表示
