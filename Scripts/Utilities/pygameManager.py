@@ -1,7 +1,7 @@
 import pygame
 from Utilities import singleton
 
-class PygameEventManager(singleton.Singleton):
+class PygameManager(singleton.Singleton):
     # イベントの取得（メインループの最初に呼ぶ）
     def get_events(self):
         self.event_list = pygame.event.get()

@@ -24,10 +24,6 @@ class GameScene(sceneBase.SceneBase):
         offset_pos_x = define.GAME_SCREEN_OFFSET[0] + define.BLOCK_SIZE[0]
         offset_pos_y = define.GAME_SCREEN_OFFSET[1]
         
-        # 背景のクリア
-        screen_clear_tuple = (enum.ObjectType.BG, 0, enum.DrawType.FILL, -1, "#000000", -1, -1, -1, -1)
-        sceneManager.SceneManager().add_draw_queue(screen_clear_tuple)
-        
         # ゲーム部分の背景
         for y in range(0, grid_num_y):
             for x in range(0, grid_num_x):
@@ -46,12 +42,12 @@ class GameScene(sceneBase.SceneBase):
         line_length_x = grid_num_x * define.BLOCK_SIZE[0]
         line_length_y = grid_num_y * define.BLOCK_SIZE[1]
         limit_left_pos =  (offset_pos_x, offset_pos_y + define.BLOCK_SIZE[1])
-        limit_right__pos = (offset_pos_x + (grid_num_x * define.BLOCK_SIZE[0]), offset_pos_y + define.BLOCK_SIZE[1])
-        left_upper_pos =  (offset_pos_x, offset_pos_y)
+        limit_right_pos = (offset_pos_x + (grid_num_x * define.BLOCK_SIZE[0]), offset_pos_y + define.BLOCK_SIZE[1])
+        left_upper_pos =  (offset_pos_x - frame_width, offset_pos_y)
         right_upper_pos = (offset_pos_x + (grid_num_x * define.BLOCK_SIZE[0]), offset_pos_y)
-        left_lower_pos = (offset_pos_x, offset_pos_y + line_length_y)
+        left_lower_pos = (offset_pos_x - frame_width, offset_pos_y + line_length_y)
         right_lower_pos = (offset_pos_x + line_length_x, offset_pos_y + line_length_y)
-        limit_line_tuple = (enum.ObjectType.BG, 0, enum.DrawType.LINE, -1, limit_color, -1, limit_left_pos, limit_right__pos, limit_width)
+        limit_line_tuple = (enum.ObjectType.BG, 0, enum.DrawType.LINE, -1, limit_color, -1, limit_left_pos, limit_right_pos, limit_width)
         line_left_tuple = (enum.ObjectType.BG, 0, enum.DrawType.LINE, -1, frame_color, -1, left_upper_pos, left_lower_pos, frame_width)
         line_right_tuple = (enum.ObjectType.BG, 0, enum.DrawType.LINE, -1, frame_color, -1, right_upper_pos, right_lower_pos, frame_width)
         line_bottom_tuple = (enum.ObjectType.BG, 0, enum.DrawType.LINE, -1, frame_color, -1, left_lower_pos, right_lower_pos, frame_width)

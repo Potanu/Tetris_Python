@@ -3,7 +3,7 @@ import numpy as np
 import random
 from Utilities import enum
 from Utilities import define
-from Utilities import pygameEventManager
+from Utilities import pygameManager
 from Scenes import sceneManager
 from Objects import mino
 
@@ -22,7 +22,7 @@ class GameManager:
     def update(self):
         self.active_func()
         self.draw()
-        self.draw_debug()
+        # self.draw_debug() # ブロックマスへのデバッグ表記（FPSがかなり落ちるので基本オフにしておく）
     
     def ready(self):
         self.change_state(enum.GameState.GAME)
@@ -34,15 +34,24 @@ class GameManager:
             self.change_state(enum.GameState.PAUSE)
             
     def pause(self):
-        if pygameEventManager.PygameEventManager().is_up(enum.KeyType.P):
+        if pygameManager.PygameManager().is_up(enum.KeyType.P):
             self.change_state(enum.GameState.GAME)
-            
+            return
+        
+        fill_tuple = (enum.ObjectType.UI, 0, enum.DrawType.FILL, -1, "#666666A0", -1, -1, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(fill_tuple)
+        font = pygame.font.Font(None, 80)
+        gTxt = font.render("PAUSE", True, "#FFFFFF")
+        start_pos = [406.0, 280.0]
+        text_tuple = (enum.ObjectType.UI, 1, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(text_tuple)
+        
     def game_over(self):
-        if pygameEventManager.PygameEventManager().is_up(enum.KeyType.S):
+        if pygameManager.PygameManager().is_up(enum.KeyType.S):
             self.change_state(enum.GameState.END)
             
     def end(self):
-        if pygameEventManager.PygameEventManager().is_up(enum.KeyType.S):
+        if pygameManager.PygameManager().is_up(enum.KeyType.S):
             self.change_state(enum.GameState.READY)
     
     def update_mino(self):
@@ -50,47 +59,48 @@ class GameManager:
             self.create_mino()
             return
         
-        if self.check_key_input():
-            # 何らかのキーアクションが発生したら処理を抜けることにする
-            return
-        
+        self.check_key_input()
         self.fall_mino()
     
     def check_key_input(self):
-        if (pygameEventManager.PygameEventManager().is_up(enum.KeyType.D)
-            or pygameEventManager.PygameEventManager().is_up(enum.KeyType.RIGHT)):
+        if (pygameManager.PygameManager().is_up(enum.KeyType.P)):
+            # ゲーム一時停止
+            self.change_state(enum.GameState.PAUSE)
+            return
+        
+        if (pygameManager.PygameManager().is_up(enum.KeyType.D)
+            or pygameManager.PygameManager().is_up(enum.KeyType.RIGHT)):
             next_mino_grid = (self.active_mino.left_upper_grid[0] + 1, self.active_mino.left_upper_grid[1])
             if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
                 # 右移動
                 self.active_mino.move_mino(enum.MinoMoveType.MOVE_RIGHT)
                 self.update_fall_mino_matrix()
-        elif (pygameEventManager.PygameEventManager().is_up(enum.KeyType.A)
-            or pygameEventManager.PygameEventManager().is_up(enum.KeyType.LEFT)):
+        elif (pygameManager.PygameManager().is_up(enum.KeyType.A)
+            or pygameManager.PygameManager().is_up(enum.KeyType.LEFT)):
             next_mino_grid = (self.active_mino.left_upper_grid[0] - 1, self.active_mino.left_upper_grid[1])
             if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
                 # 左移動
                 self.active_mino.move_mino(enum.MinoMoveType.MOVE_LEFT)
                 self.update_fall_mino_matrix()
-        elif pygameEventManager.PygameEventManager().is_up(enum.KeyType.E):
+        elif pygameManager.PygameManager().is_up(enum.KeyType.E):
             if self.check_object(self.active_mino.matrix[self.active_mino.get_next_index(1)], self.active_mino.left_upper_grid):
                 # 右回転
                 self.active_mino.move_mino(enum.MinoMoveType.ROTATE_RIGHT)
                 self.update_fall_mino_matrix()
-        elif pygameEventManager.PygameEventManager().is_up(enum.KeyType.Q):
+        elif pygameManager.PygameManager().is_up(enum.KeyType.Q):
             if self.check_object(self.active_mino.matrix[self.active_mino.get_next_index(-1)], self.active_mino.left_upper_grid):
                 # 左回転
                 self.active_mino.move_mino(enum.MinoMoveType.ROTATE_LEFT)
                 self.update_fall_mino_matrix()
-        elif pygameEventManager.PygameEventManager().is_up(enum.KeyType.P):
-            self.change_state(enum.GameState.GAME_OVER)
-        else:
-            return False
-        
-        return True
     
     # ミノの降下処理
     def fall_mino(self):
-        if not self.active_mino.check_fall(self.fall_speed):
+        # 降下速度を取得
+        is_press_down = pygameManager.PygameManager().is_pressed(enum.KeyType.S) or \
+            pygameManager.PygameManager().is_pressed(enum.KeyType.DOWN)
+        fall_speed = define.FALL_HIGH_SPEED if is_press_down else self.fall_speed
+        
+        if not self.active_mino.check_fall(fall_speed):
             # 降下タイミングでは無いので処理を抜ける
             return
         
@@ -179,6 +189,7 @@ class GameManager:
         draw_matrix(self.board_matrix)
         draw_matrix(self.fall_mino_matrix)
     
+    # ブロックマスへのデバッグ表記
     def draw_debug(self):
         if not sceneManager.SceneManager().is_debug:
             return

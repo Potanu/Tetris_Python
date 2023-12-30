@@ -17,11 +17,12 @@ class ObjectType(IntEnum):
 
 # 描画の種別
 class DrawType(Enum):
-    TEXT = 0,   # テキスト
-    RECT = 1,   # 矩形
-    LINE = 2,   # 線
-    FILL = 3,   # 塗りつぶし
-
+    TEXT = 0,       # テキスト
+    RECT = 1,       # 矩形
+    RECT_ALPHA = 2  # 矩形（α値指定）
+    LINE = 3,       # 線
+    FILL = 4,       # 塗りつぶし
+    
 # 描画情報判別用
 class DrawData(IntEnum):
     OBJECT_TYPE = 0,# オブジェクトの種別
@@ -32,7 +33,7 @@ class DrawData(IntEnum):
     RECT = 5,       # 矩形
     START_POS = 6,  # 始点の座標
     END_POS = 7,    # 終点の座標
-    WIDTH = 8,      # 線の幅
+    WIDTH = 8       # 線の幅
 
 # キーの種別
 class KeyType(IntEnum):
@@ -67,7 +68,7 @@ class MinoMoveType(Enum):
     MOVE_LEFT = 1,      # 左移動
     ROTATE_RIGHT = 2,   # 右回転
     ROTATE_LEFT = 3,    # 左回転
-    FALL = 4            # １マス降下
+    FALL = 4,           # 1マス降下
 
 # ゲームの状態
 class GameState(Enum):
