@@ -100,4 +100,25 @@ class GameScene(sceneBase.SceneBase):
         sceneManager.SceneManager().add_draw_queue(next_mino_frame_right_tuple)
         sceneManager.SceneManager().add_draw_queue(next_mino_text_bg_tuple)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
+        
+        # 操作説明
+        text_lines = [
+            "A : Move Left",
+            "D : Move Right",
+            "S : Fall",
+            "Right Arrow : Rotate Right",
+            "Left Arrow : Rotate Left",
+            "P : Pause"
+        ]
+
+        y_offset = 400.0
+        index = 0
+        font = pygame.font.Font(None, 30)
+        for line in text_lines:
+            gTxt = font.render(line, True, "#FFFFFF")
+            text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
+                      (40.0, y_offset + (index * 30.0)), -1, -1)
+            sceneManager.SceneManager().add_draw_queue(text_tuple)
+            index += 1
+            
         # TODO: 他UI
