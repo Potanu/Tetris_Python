@@ -19,14 +19,12 @@ class GameScene(sceneBase.SceneBase):
         self.gameManager.update()
     
     def draw(self):
-        grid_num_x = define.GRID_NUM[0] - 2
-        grid_num_y = define.GRID_NUM[1] - 2
         offset_pos_x = define.GAME_SCREEN_OFFSET[0] + define.BLOCK_SIZE[0]
         offset_pos_y = define.GAME_SCREEN_OFFSET[1]
         
         # ゲーム部分の背景
-        for y in range(0, grid_num_y):
-            for x in range(0, grid_num_x):
+        for y in range(0, define.GAME_GRID_NUM[1]):
+            for x in range(0, define.GAME_GRID_NUM[0]):
                 if x % 2 == y % 2:
                     pos_x = offset_pos_x + define.BLOCK_SIZE[0] * x
                     pos_y = offset_pos_y + define.BLOCK_SIZE[1] * y
@@ -39,12 +37,12 @@ class GameScene(sceneBase.SceneBase):
         frame_color = "#0000B4"
         limit_width = 1
         frame_width = 2
-        line_length_x = grid_num_x * define.BLOCK_SIZE[0]
-        line_length_y = grid_num_y * define.BLOCK_SIZE[1]
+        line_length_x = define.GAME_GRID_NUM[0] * define.BLOCK_SIZE[0]
+        line_length_y = define.GAME_GRID_NUM[1] * define.BLOCK_SIZE[1]
         limit_left_pos =  (offset_pos_x, offset_pos_y + define.BLOCK_SIZE[1])
-        limit_right_pos = (offset_pos_x + (grid_num_x * define.BLOCK_SIZE[0]), offset_pos_y + define.BLOCK_SIZE[1])
+        limit_right_pos = (offset_pos_x + (define.GAME_GRID_NUM[0] * define.BLOCK_SIZE[0]), offset_pos_y + define.BLOCK_SIZE[1])
         left_upper_pos =  (offset_pos_x - frame_width, offset_pos_y)
-        right_upper_pos = (offset_pos_x + (grid_num_x * define.BLOCK_SIZE[0]), offset_pos_y)
+        right_upper_pos = (offset_pos_x + (define.GAME_GRID_NUM[0] * define.BLOCK_SIZE[0]), offset_pos_y)
         left_lower_pos = (offset_pos_x - frame_width, offset_pos_y + line_length_y)
         right_lower_pos = (offset_pos_x + line_length_x, offset_pos_y + line_length_y)
         limit_line_tuple = (enum.ObjectType.BG, 0, enum.DrawType.LINE, -1, limit_color, -1, limit_left_pos, limit_right_pos, limit_width)

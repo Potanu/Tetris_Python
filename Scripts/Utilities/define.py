@@ -8,7 +8,8 @@ FPS = 60
 # ゲーム
 # =========================
 GAME_SCREEN_OFFSET = (320, 0) # ゲームフィールドのオフセット
-GRID_NUM = (12, 23)      # マスの数
+BOARD_GRID_NUM = (12, 23)     # ボードのマスの数
+GAME_GRID_NUM = (10, 21)      # ゲームボードのマスの数
 START_MINO_GRID = (4, 0) # ミノの出現位置（左上のマス）
 BLOCK_SIZE = (30, 30)    # ブロックサイズ
 DEFAULT_FALL_SPEED = 48  # 何フレーム間隔で降下するか

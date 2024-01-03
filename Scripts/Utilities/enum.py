@@ -72,8 +72,9 @@ class MinoMoveType(Enum):
 
 # ゲームの状態
 class GameState(Enum):
-    READY = 0,
-    GAME = 1,
-    PAUSE = 2,
-    GAME_OVER = 3,
-    END = 4
+    READY = 0,          # 待機
+    FALL = 1,           # ミノの降下中
+    CLEAR_LINE = 2,     # ラインクリア
+    PAUSE = 3,          # 一時停止
+    GAME_OVER = 4,      # ゲームオーバー
+    END = 5             # 終了

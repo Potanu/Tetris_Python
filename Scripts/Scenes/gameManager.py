@@ -11,6 +11,7 @@ class GameManager:
     def init(self):
         self.active_mino = None     # 降下中のミノ
         self.fall_speed = define.DEFAULT_FALL_SPEED # ミノの降下速度
+        self.clear_line_list = []   # 消える段
         self.level = 1  # レベル
         self.board_matrix = self.clean_matrix()
         self.fall_mino_matrix = self.board_matrix.copy()
@@ -22,20 +23,65 @@ class GameManager:
     def update(self):
         self.active_func()
         self.draw()
-        # self.draw_debug() # ブロックマスへのデバッグ表記（FPSがかなり落ちるので基本オフにしておく）
+        self.draw_debug() # ブロックマスへのデバッグ表記（※FPSがかなり落ちる）
     
     def ready(self):
-        self.change_state(enum.GameState.GAME)
+        self.change_state(enum.GameState.FALL)
     
     def game(self):
         self.update_mino()
         
         if False:
             self.change_state(enum.GameState.PAUSE)
+    
+    def clear_line(self):
+        # ラインクリア
+        for y in range(0, len(self.clear_line_list)):
+            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+                index_y = self.clear_line_list[y]
+                self.board_matrix[index_y][x] = enum.MinoType.NONE
+
+        for y in range(1, 1 + define.GAME_GRID_NUM[1]):
+            top_mino_index = -1
+            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+                if enum.MinoType.NONE < self.board_matrix[y][x]:
+                    top_mino_index = y
+                    break
+            if -1 < top_mino_index:
+                break
+        
+        self.shift_down(top_mino_index)
+        self.clear_line_list.clear()
+        self.change_state(enum.GameState.FALL)
+    
+    # クリアした分の段を下に詰める         
+    def shift_down(self, top_mino_index):
+        clear_index = -1
+        for y in reversed(range(top_mino_index, 1 + define.GAME_GRID_NUM[1])): # 一番下の段は固定ブロックしかないので見ない
+            is_clear = True
+            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+                if enum.MinoType.NONE < self.board_matrix[y][x]:
+                    is_clear = False
+                    break
             
+            if is_clear:
+                clear_index = y
+                break
+        
+        if 0 < clear_index:
+            for y in reversed(range(top_mino_index, clear_index + 1)):
+                for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+                    if y == top_mino_index:
+                        self.board_matrix[y][x] = enum.MinoType.NONE
+                    else:
+                        self.board_matrix[y][x] = self.board_matrix[y - 1][x]
+            
+            if top_mino_index < clear_index:
+                self.shift_down(top_mino_index + 1)
+    
     def pause(self):
         if pygameManager.PygameManager().is_up(enum.KeyType.P):
-            self.change_state(enum.GameState.GAME)
+            self.change_state(enum.GameState.FALL)
             return
         
         fill_tuple = (enum.ObjectType.UI, 0, enum.DrawType.FILL, -1, "#666666A0", -1, -1, -1, -1)
@@ -68,26 +114,24 @@ class GameManager:
             self.change_state(enum.GameState.PAUSE)
             return
         
-        if (pygameManager.PygameManager().is_up(enum.KeyType.D)
-            or pygameManager.PygameManager().is_up(enum.KeyType.RIGHT)):
+        if (pygameManager.PygameManager().is_up(enum.KeyType.D)):
             next_mino_grid = (self.active_mino.left_upper_grid[0] + 1, self.active_mino.left_upper_grid[1])
             if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
                 # 右移動
                 self.active_mino.move_mino(enum.MinoMoveType.MOVE_RIGHT)
                 self.update_fall_mino_matrix()
-        elif (pygameManager.PygameManager().is_up(enum.KeyType.A)
-            or pygameManager.PygameManager().is_up(enum.KeyType.LEFT)):
+        elif (pygameManager.PygameManager().is_up(enum.KeyType.A)):
             next_mino_grid = (self.active_mino.left_upper_grid[0] - 1, self.active_mino.left_upper_grid[1])
             if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
                 # 左移動
                 self.active_mino.move_mino(enum.MinoMoveType.MOVE_LEFT)
                 self.update_fall_mino_matrix()
-        elif pygameManager.PygameManager().is_up(enum.KeyType.E):
+        elif pygameManager.PygameManager().is_up(enum.KeyType.RIGHT):
             if self.check_object(self.active_mino.matrix[self.active_mino.get_next_index(1)], self.active_mino.left_upper_grid):
                 # 右回転
                 self.active_mino.move_mino(enum.MinoMoveType.ROTATE_RIGHT)
                 self.update_fall_mino_matrix()
-        elif pygameManager.PygameManager().is_up(enum.KeyType.Q):
+        elif pygameManager.PygameManager().is_up(enum.KeyType.LEFT):
             if self.check_object(self.active_mino.matrix[self.active_mino.get_next_index(-1)], self.active_mino.left_upper_grid):
                 # 左回転
                 self.active_mino.move_mino(enum.MinoMoveType.ROTATE_LEFT)
@@ -96,8 +140,7 @@ class GameManager:
     # ミノの降下処理
     def fall_mino(self):
         # 降下速度を取得
-        is_press_down = pygameManager.PygameManager().is_pressed(enum.KeyType.S) or \
-            pygameManager.PygameManager().is_pressed(enum.KeyType.DOWN)
+        is_press_down = pygameManager.PygameManager().is_pressed(enum.KeyType.S)
         fall_speed = define.FALL_HIGH_SPEED if is_press_down else self.fall_speed
         
         if not self.active_mino.check_fall(fall_speed):
@@ -115,6 +158,22 @@ class GameManager:
             self.board_matrix = np.where(self.board_matrix != 0, self.board_matrix, self.fall_mino_matrix)
             self.fall_mino_matrix = self.clean_matrix()
             self.active_mino = None
+            if self.check_line():
+                self.change_state(enum.GameState.CLEAR_LINE)
+    
+    # 消せるラインがあるかをチェック
+    def check_line(self):
+        for y in range(0, len(self.board_matrix) - 1): # 一番下の段は固定ブロックしかないので見ない
+            is_clear = True
+            for x in range(0, len(self.board_matrix[0])):
+                if self.board_matrix[y][x] == enum.MinoType.NONE:
+                    is_clear = False
+                    break
+            
+            if is_clear:
+                self.clear_line_list.append(y)
+        
+        return 0 < len(self.clear_line_list)
     
     # 当たり判定チェック(なければTrue)
     def check_object(self, next_mino_matrix, next_mino_grid):
@@ -140,7 +199,7 @@ class GameManager:
                 self.fall_mino_matrix[index_y][index_x] = self.active_mino.mino_type
     
     def clean_matrix(self):
-        return np.full((define.GRID_NUM[1], define.GRID_NUM[0]), enum.MinoType.NONE)
+        return np.full((define.BOARD_GRID_NUM[1], define.BOARD_GRID_NUM[0]), enum.MinoType.NONE)
     
     def create_mino(self):
         type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
@@ -159,9 +218,12 @@ class GameManager:
             case enum.GameState.READY:
                 self.active_func = self.ready
                 print("READY")
-            case enum.GameState.GAME:
+            case enum.GameState.FALL:
                 self.active_func = self.game
                 print("GAME")
+            case enum.GameState.CLEAR_LINE:
+                self.active_func = self.clear_line
+                print("CLEAR_LINE")
             case enum.GameState.PAUSE:
                 self.active_func = self.pause
                 print("PAUSE")
