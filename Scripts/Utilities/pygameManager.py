@@ -28,5 +28,3 @@ class PygameManager(singleton.Singleton):
         for event in self.event_list:
             if event.type == pygame.KEYUP:
                 return event.key == key_type
-      
-    

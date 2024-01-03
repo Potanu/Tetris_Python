@@ -49,6 +49,7 @@ class KeyType(IntEnum):
     DOWN = pygame.K_DOWN,
     RIGHT = pygame.K_RIGHT,
     LEFT = pygame.K_LEFT,
+    SPACE = pygame.K_SPACE,
     DEBUG = pygame.K_F1  # デバッグ用
 
 # ミノの種類

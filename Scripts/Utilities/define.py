@@ -12,10 +12,12 @@ BOARD_GRID_NUM = (12, 23)     # ボードのマスの数
 GAME_GRID_NUM = (10, 21)      # ゲームボードのマスの数
 START_MINO_GRID = (4, 0) # ミノの出現位置（左上のマス）
 BLOCK_SIZE = (30, 30)    # ブロックサイズ
+READY_FRAME = 60.0       # ゲーム開始までのフレーム
 DEFAULT_FALL_SPEED = 48  # 何フレーム間隔で降下するか
 FALL_HIGH_SPEED = 1      # 何フレーム間隔で降下するか（降下キー押下時）
 LEVEL_UP_COUNT = 10      # 何段ミノを消したらレベルが上がるか
 SPEED_UP_INTERVAL = 1    # レベルアップ時の速度上昇量
+GAME_OVER_GRID_Y = 2     # ゲームオーバー判定縦マス数
 NEXT_MINO_MAX = 6        # 予告ミノの最大数
 
 # -------------------------

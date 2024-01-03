@@ -19,6 +19,7 @@ class GameManager:
         self.board_matrix[:,  0] = -1   # 左辺の透明ブロック
         self.board_matrix[:, -1] = -1   # 右辺の透明ブロック
         self.next_mino_list = []    # 予告ミノ
+        self.ready_counter = define.READY_FRAME    # ゲーム開始までのフレーム
         for y in range(0, define.NEXT_MINO_MAX):
             type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
             self.next_mino_list.append(mino.Mino(type))
@@ -30,8 +31,31 @@ class GameManager:
         self.draw_debug() # ブロックマスへのデバッグ表記（※FPSがかなり落ちる）
     
     def ready(self):
-        self.change_state(enum.GameState.FALL)
-    
+        if (self.ready_counter <= 0):
+            self.ready_counter = define.READY_FRAME
+            self.change_state(enum.GameState.FALL)
+            return
+        
+        string = ""
+        rate = self.ready_counter / define.READY_FRAME
+        if 0.750 < rate:
+            string = "3"
+        elif 0.50 < rate:
+            string = "2"
+        elif 0.250 < rate:
+            string = "1"
+        elif 0.0 < rate:
+            string = "0"
+
+        fill_tuple = (enum.ObjectType.UI, 10, enum.DrawType.FILL, -1, "#66666640", -1, -1, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(fill_tuple)
+        font = pygame.font.Font(None, 100)
+        gTxt = font.render(string, True, "#FFFFFF")
+        start_pos = [470.0, 270.0]
+        text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(text_tuple)
+        self.ready_counter -= 1
+        
     def game(self):
         self.update_mino()
         
@@ -55,13 +79,17 @@ class GameManager:
                 break
         
         self.shift_down(top_mino_index)
-        self.clear_line_list.clear()
-        self.change_state(enum.GameState.FALL)
+        
+        if self.check_gameover():
+            self.change_state(enum.GameState.GAME_OVER)
+        else:
+            self.clear_line_list.clear()
+            self.change_state(enum.GameState.FALL)
     
     # クリアした分の段を下に詰める         
     def shift_down(self, top_mino_index):
         clear_index = -1
-        for y in reversed(range(top_mino_index, 1 + define.GAME_GRID_NUM[1])): # 一番下の段は固定ブロックしかないので見ない
+        for y in reversed(range(top_mino_index, 1 + define.GAME_GRID_NUM[1])):
             is_clear = True
             for x in range(1, 1 + define.GAME_GRID_NUM[0]):
                 if enum.MinoType.NONE < self.board_matrix[y][x]:
@@ -88,17 +116,33 @@ class GameManager:
             self.change_state(enum.GameState.FALL)
             return
         
-        fill_tuple = (enum.ObjectType.UI, 0, enum.DrawType.FILL, -1, "#666666A0", -1, -1, -1, -1)
+        fill_tuple = (enum.ObjectType.UI, 10, enum.DrawType.FILL, -1, "#666666A0", -1, -1, -1, -1)
         sceneManager.SceneManager().add_draw_queue(fill_tuple)
         font = pygame.font.Font(None, 80)
-        gTxt = font.render("PAUSE", True, "#FFFFFF")
+        gTxt = font.render("GAME OVER", True, "#FFFFFF")
         start_pos = [406.0, 280.0]
-        text_tuple = (enum.ObjectType.UI, 1, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
+        text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
         
     def game_over(self):
-        if pygameManager.PygameManager().is_up(enum.KeyType.S):
-            self.change_state(enum.GameState.END)
+        if pygameManager.PygameManager().is_down(enum.KeyType.SPACE):
+            self.init()
+            self.change_state(enum.GameState.READY)
+            return
+        
+        fill_tuple = (enum.ObjectType.UI, 10, enum.DrawType.FILL, -1, "#AA0000A0", -1, -1, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(fill_tuple)
+        gameover_font = pygame.font.Font(None, 100)
+        gTxt = gameover_font.render("GAME OVER", True, "#000000")
+        start_pos = [270.0, 220.0]
+        text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(text_tuple)
+        input_font = pygame.font.Font(None, 60)
+        gTxt = input_font.render("Please Enter SPACE KEY", True, "#FFFFFF")
+        start_pos = [230.0, 340.0]
+        text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(text_tuple)
+        
             
     def end(self):
         if pygameManager.PygameManager().is_up(enum.KeyType.S):
@@ -164,6 +208,9 @@ class GameManager:
             self.active_mino = None
             if self.check_line():
                 self.change_state(enum.GameState.CLEAR_LINE)
+            else:
+                if self.check_gameover():
+                    self.change_state(enum.GameState.GAME_OVER)   
     
     # 消せるラインがあるかをチェック
     def check_line(self):
@@ -189,6 +236,19 @@ class GameManager:
                     continue
                 return False
         return True
+    
+    # ゲームオーバー判定
+    def check_gameover(self):
+        is_gameover = False
+        for y in range(0, define.GAME_OVER_GRID_Y):
+            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+                if self.board_matrix[y][x] != enum.MinoType.NONE:
+                    is_gameover = True
+                    break
+            if is_gameover:
+                break
+        
+        return is_gameover
     
     # 降下中ミノの情報更新
     def update_fall_mino_matrix(self):

@@ -39,8 +39,8 @@ class GameScene(sceneBase.SceneBase):
         frame_width = 2
         line_length_x = define.GAME_GRID_NUM[0] * define.BLOCK_SIZE[0]
         line_length_y = define.GAME_GRID_NUM[1] * define.BLOCK_SIZE[1]
-        limit_left_pos =  (offset_pos_x, offset_pos_y + define.BLOCK_SIZE[1])
-        limit_right_pos = (offset_pos_x + (define.GAME_GRID_NUM[0] * define.BLOCK_SIZE[0]), offset_pos_y + define.BLOCK_SIZE[1])
+        limit_left_pos =  (offset_pos_x, offset_pos_y + define.BLOCK_SIZE[define.GAME_OVER_GRID_Y - 1])
+        limit_right_pos = (offset_pos_x + (define.GAME_GRID_NUM[0] * define.BLOCK_SIZE[0]), offset_pos_y + define.BLOCK_SIZE[define.GAME_OVER_GRID_Y - 1])
         left_upper_pos =  (offset_pos_x - frame_width, offset_pos_y)
         right_upper_pos = (offset_pos_x + (define.GAME_GRID_NUM[0] * define.BLOCK_SIZE[0]), offset_pos_y)
         left_lower_pos = (offset_pos_x - frame_width, offset_pos_y + line_length_y)
