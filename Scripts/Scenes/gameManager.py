@@ -18,6 +18,10 @@ class GameManager:
         self.board_matrix[-1, :] = -1   # 下辺の透明ブロック
         self.board_matrix[:,  0] = -1   # 左辺の透明ブロック
         self.board_matrix[:, -1] = -1   # 右辺の透明ブロック
+        self.next_mino_list = []    # 予告ミノ
+        for y in range(0, define.NEXT_MINO_MAX):
+            type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
+            self.next_mino_list.append(mino.Mino(type))
         self.change_state(enum.GameState.READY)
         
     def update(self):
@@ -202,8 +206,7 @@ class GameManager:
         return np.full((define.BOARD_GRID_NUM[1], define.BOARD_GRID_NUM[0]), enum.MinoType.NONE)
     
     def create_mino(self):
-        type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
-        self.active_mino = mino.Mino(type)
+        self.active_mino = self.next_mino_list[0]
         mino_matrix = self.active_mino.matrix[self.active_mino.index].copy()
         for y in range(0, len(mino_matrix)):
             for x in range(0, len(mino_matrix[0])):
@@ -212,6 +215,14 @@ class GameManager:
                 index_x = self.active_mino.left_upper_grid[0] + x
                 index_y = self.active_mino.left_upper_grid[1] + y
                 self.fall_mino_matrix[index_y][index_x] = self.active_mino.mino_type
+                
+        self.update_next_mino()
+    
+    def update_next_mino(self):
+        for index in range(1, len(self.next_mino_list)):
+            self.next_mino_list[index - 1] = self.next_mino_list[index]
+        next_type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
+        self.next_mino_list[len(self.next_mino_list) - 1] = mino.Mino(next_type)
     
     def change_state(self, next_state):
         match next_state:

@@ -16,6 +16,7 @@ DEFAULT_FALL_SPEED = 48  # 何フレーム間隔で降下するか
 FALL_HIGH_SPEED = 1      # 何フレーム間隔で降下するか（降下キー押下時）
 LEVEL_UP_COUNT = 10      # 何段ミノを消したらレベルが上がるか
 SPEED_UP_INTERVAL = 1    # レベルアップ時の速度上昇量
+NEXT_MINO_MAX = 6        # 予告ミノの最大数
 
 # -------------------------
 # ミノの設定
