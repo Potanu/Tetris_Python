@@ -14,7 +14,9 @@ class GameManager:
         self.clear_line_list = []   # 消える段
         self.level = 1  # レベル
         self.board_matrix = self.clean_matrix()
-        self.fall_mino_matrix = self.board_matrix.copy()
+        self.fall_mino_matrix = self.board_matrix.copy()    # 降下中ミノの描画用マトリクス
+        self.ghost_mino_matrix = self.board_matrix.copy()   # ゴーストミノの描画用マトリクス
+        self.ghost_mino_left_upper_grid = define.START_MINO_GRID   # ゴーストミノの左上マス座標
         self.board_matrix[-1, :] = -1   # 下辺の透明ブロック
         self.board_matrix[:,  0] = -1   # 左辺の透明ブロック
         self.board_matrix[:, -1] = -1   # 右辺の透明ブロック
@@ -30,6 +32,7 @@ class GameManager:
         self.draw()
         self.draw_debug() # ブロックマスへのデバッグ表記（※FPSがかなり落ちる）
     
+    # STATE: READY
     def ready(self):
         if (self.ready_counter <= 0):
             self.ready_counter = define.READY_FRAME
@@ -47,7 +50,7 @@ class GameManager:
         elif 0.0 < rate:
             string = "0"
 
-        fill_tuple = (enum.ObjectType.UI, 10, enum.DrawType.FILL, -1, "#66666640", -1, -1, -1, -1)
+        fill_tuple = (enum.ObjectType.UI, 10, enum.DrawType.FILL, -1, "#00000020", -1, -1, -1, -1)
         sceneManager.SceneManager().add_draw_queue(fill_tuple)
         font = pygame.font.Font(None, 100)
         gTxt = font.render(string, True, "#FFFFFF")
@@ -55,15 +58,16 @@ class GameManager:
         text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
         self.ready_counter -= 1
-        
+   
+    # STATE: GAME     
     def game(self):
         self.update_mino()
         
         if False:
             self.change_state(enum.GameState.PAUSE)
     
+    # ライン消し
     def clear_line(self):
-        # ラインクリア
         for y in range(0, len(self.clear_line_list)):
             for x in range(1, 1 + define.GAME_GRID_NUM[0]):
                 index_y = self.clear_line_list[y]
@@ -110,7 +114,8 @@ class GameManager:
             
             if top_mino_index < clear_index:
                 self.shift_down(top_mino_index + 1)
-    
+   
+    # STATE: PAUSE 
     def pause(self):
         if pygameManager.PygameManager().is_up(enum.KeyType.P):
             self.change_state(enum.GameState.FALL)
@@ -119,11 +124,12 @@ class GameManager:
         fill_tuple = (enum.ObjectType.UI, 10, enum.DrawType.FILL, -1, "#666666A0", -1, -1, -1, -1)
         sceneManager.SceneManager().add_draw_queue(fill_tuple)
         font = pygame.font.Font(None, 80)
-        gTxt = font.render("GAME OVER", True, "#FFFFFF")
+        gTxt = font.render("PAUSE", True, "#FFFFFF")
         start_pos = [406.0, 280.0]
         text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
-        
+    
+    # STATE: GAME_OVER  
     def game_over(self):
         if pygameManager.PygameManager().is_down(enum.KeyType.SPACE):
             self.init()
@@ -134,20 +140,21 @@ class GameManager:
         sceneManager.SceneManager().add_draw_queue(fill_tuple)
         gameover_font = pygame.font.Font(None, 100)
         gTxt = gameover_font.render("GAME OVER", True, "#000000")
-        start_pos = [270.0, 220.0]
+        start_pos = [282.0, 220.0]
         text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
         input_font = pygame.font.Font(None, 60)
         gTxt = input_font.render("Please Enter SPACE KEY", True, "#FFFFFF")
-        start_pos = [230.0, 340.0]
+        start_pos = [242.0, 340.0]
         text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
-        
-            
+ 
+    # STATE: END              
     def end(self):
         if pygameManager.PygameManager().is_up(enum.KeyType.S):
             self.change_state(enum.GameState.READY)
     
+    # 操作ミノの更新
     def update_mino(self):
         if self.active_mino == None:
             self.create_mino()
@@ -156,6 +163,7 @@ class GameManager:
         self.check_key_input()
         self.fall_mino()
     
+    # キーの押下状態をチェック
     def check_key_input(self):
         if (pygameManager.PygameManager().is_up(enum.KeyType.P)):
             # ゲーム一時停止
@@ -168,22 +176,26 @@ class GameManager:
                 # 右移動
                 self.active_mino.move_mino(enum.MinoMoveType.MOVE_RIGHT)
                 self.update_fall_mino_matrix()
+                self.update_ghost_mino_matrix()
         elif (pygameManager.PygameManager().is_up(enum.KeyType.A)):
             next_mino_grid = (self.active_mino.left_upper_grid[0] - 1, self.active_mino.left_upper_grid[1])
             if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
                 # 左移動
                 self.active_mino.move_mino(enum.MinoMoveType.MOVE_LEFT)
                 self.update_fall_mino_matrix()
+                self.update_ghost_mino_matrix()
         elif pygameManager.PygameManager().is_up(enum.KeyType.RIGHT):
             if self.check_object(self.active_mino.matrix[self.active_mino.get_next_index(1)], self.active_mino.left_upper_grid):
                 # 右回転
                 self.active_mino.move_mino(enum.MinoMoveType.ROTATE_RIGHT)
                 self.update_fall_mino_matrix()
+                self.update_ghost_mino_matrix()
         elif pygameManager.PygameManager().is_up(enum.KeyType.LEFT):
             if self.check_object(self.active_mino.matrix[self.active_mino.get_next_index(-1)], self.active_mino.left_upper_grid):
                 # 左回転
                 self.active_mino.move_mino(enum.MinoMoveType.ROTATE_LEFT)
                 self.update_fall_mino_matrix()
+                self.update_ghost_mino_matrix()
     
     # ミノの降下処理
     def fall_mino(self):
@@ -250,21 +262,44 @@ class GameManager:
         
         return is_gameover
     
-    # 降下中ミノの情報更新
+    # 降下ミノ描画用マトリクスの更新
     def update_fall_mino_matrix(self):
         self.fall_mino_matrix = self.clean_matrix()
-        mino_matrix = self.active_mino.matrix[self.active_mino.index].copy()
-        for y in reversed(range(0, len(mino_matrix))):
-            for x in range(0, len(mino_matrix[0])):
+        fall_mino_matrix = self.active_mino.matrix[self.active_mino.index].copy()
+        for y in range(0, len(fall_mino_matrix)):
+            for x in range(0, len(fall_mino_matrix[0])):
                 index_x = self.active_mino.left_upper_grid[0] + x
                 index_y = self.active_mino.left_upper_grid[1] + y
-                if mino_matrix[y][x] == [0]:
+                if fall_mino_matrix[y][x] == [0]:
                     continue
                 self.fall_mino_matrix[index_y][index_x] = self.active_mino.mino_type
     
+    # ゴーストミノ描画用マトリクスの更新
+    def update_ghost_mino_matrix(self):
+        self.ghost_mino_left_upper_grid = self.active_mino.left_upper_grid
+   
+        while True:
+            if self.check_object(self.active_mino.matrix[self.active_mino.index],
+                    (self.ghost_mino_left_upper_grid[0], self.ghost_mino_left_upper_grid[1] + 1)):
+                self.ghost_mino_left_upper_grid = (self.ghost_mino_left_upper_grid[0], self.ghost_mino_left_upper_grid[1] + 1)
+            else:
+                break     
+        
+        fall_mino_matrix = self.active_mino.matrix[self.active_mino.index].copy()
+        self.ghost_mino_matrix = self.clean_matrix()
+        for y in range(0, len(fall_mino_matrix)):
+            for x in range(0, len(fall_mino_matrix[0])):
+                index_x = self.ghost_mino_left_upper_grid[0] + x
+                index_y = self.ghost_mino_left_upper_grid[1] + y
+                if fall_mino_matrix[y][x] == [0]:
+                    continue
+                self.ghost_mino_matrix[index_y][index_x] = self.active_mino.mino_type
+    
+    # 初期化したボード配列を返す
     def clean_matrix(self):
         return np.full((define.BOARD_GRID_NUM[1], define.BOARD_GRID_NUM[0]), enum.MinoType.NONE)
     
+    # 新規ミノの作成
     def create_mino(self):
         self.active_mino = self.next_mino_list[0]
         mino_matrix = self.active_mino.matrix[self.active_mino.index].copy()
@@ -277,13 +312,16 @@ class GameManager:
                 self.fall_mino_matrix[index_y][index_x] = self.active_mino.mino_type
                 
         self.update_next_mino()
+        self.update_ghost_mino_matrix()
     
+    # 予告ミノの更新
     def update_next_mino(self):
         for index in range(1, len(self.next_mino_list)):
             self.next_mino_list[index - 1] = self.next_mino_list[index]
         next_type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
         self.next_mino_list[len(self.next_mino_list) - 1] = mino.Mino(next_type)
     
+    # ステート変更
     def change_state(self, next_state):
         match next_state:
             case enum.GameState.READY:
@@ -306,8 +344,9 @@ class GameManager:
                 print("END")       
         self.game_state = next_state
     
+    # 描画
     def draw(self):
-        def draw_matrix(matrix):
+        def draw_matrix(matrix, alpha):
             for y in range(0, len(matrix)):
                 for x in range(0, len(matrix[0])):
                     mino_type = matrix[y][x]
@@ -315,12 +354,14 @@ class GameManager:
                         continue
                     pos_x = define.GAME_SCREEN_OFFSET[0] + define.BLOCK_SIZE[0] * x
                     pos_y = define.GAME_SCREEN_OFFSET[1] + define.BLOCK_SIZE[1] * y - define.BLOCK_SIZE[1]
-                    block_tuple = (enum.ObjectType.OBJECT, 0, enum.DrawType.RECT, -1, define.MINO_COLOR_STR[mino_type],
+                    color = define.MINO_COLOR_STR[mino_type] + alpha
+                    block_tuple = (enum.ObjectType.OBJECT, 0, enum.DrawType.RECT_ALPHA, -1, color,
                                 pygame.Rect(pos_x + 1, pos_y + 1, define.BLOCK_SIZE[0] - 2, define.BLOCK_SIZE[1] - 2), -1, -1, -1)
                     sceneManager.SceneManager().add_draw_queue(block_tuple)
                 
-        draw_matrix(self.board_matrix)
-        draw_matrix(self.fall_mino_matrix)
+        draw_matrix(self.board_matrix, "FF")
+        draw_matrix(self.fall_mino_matrix, "FF")
+        draw_matrix(self.ghost_mino_matrix, define.GHOST_MINO_ALPHA)
     
     # ブロックマスへのデバッグ表記
     def draw_debug(self):
