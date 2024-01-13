@@ -6,12 +6,15 @@ from Utilities import define
 from Utilities import pygameManager
 from Scenes import sceneManager
 from Objects import mino
+from Objects import clearMinoAnim
 
 class GameManager:
     def init(self):
         self.active_mino = None     # 降下中のミノ
         self.fall_speed = define.DEFAULT_FALL_SPEED # ミノの降下速度
         self.clear_line_list = []   # 消える段
+        self.clear_line_anim_counter = 0    # ライン消しアニメーション管理用
+        self.clear_line_animation_list = [] # ライン消しアニメーション管理用
         self.level = 1  # レベル
         self.board_matrix = self.clean_matrix()
         self.fall_mino_matrix = self.board_matrix.copy()    # 降下中ミノの描画用マトリクス
@@ -68,11 +71,35 @@ class GameManager:
     
     # ライン消し
     def clear_line(self):
+        # ラインのミノを全て削除
         for y in range(0, len(self.clear_line_list)):
             for x in range(1, 1 + define.GAME_GRID_NUM[0]):
                 index_y = self.clear_line_list[y]
                 self.board_matrix[index_y][x] = enum.MinoType.NONE
-
+        
+        # ライン消しアニメーション設定
+        for y in range(0, len(self.clear_line_list)):
+            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+                anim = clearMinoAnim.ClearMinoAnim()
+                grid = (x, self.clear_line_list[y])
+                anim.set_data(grid)
+                self.clear_line_animation_list.append(anim)
+        
+        self.change_state(enum.GameState.CLEAR_LINE_ANIM)
+    
+    # ライン消しアニメーション
+    def clear_line_animation(self):
+        is_end_all_anim = True
+        for j in range(0, len(self.clear_line_animation_list)):
+            self.clear_line_animation_list[j].update()
+            is_end_all_anim &= self.clear_line_animation_list[j].is_end_anim
+        
+        if not is_end_all_anim:
+            return
+        
+        self.clear_line_animation_list.clear()
+        
+        # クリアした分の段を下に詰める
         for y in range(1, 1 + define.GAME_GRID_NUM[1]):
             top_mino_index = -1
             for x in range(1, 1 + define.GAME_GRID_NUM[0]):
@@ -333,6 +360,9 @@ class GameManager:
             case enum.GameState.CLEAR_LINE:
                 self.active_func = self.clear_line
                 print("CLEAR_LINE")
+            case enum.GameState.CLEAR_LINE_ANIM:
+                self.active_func = self.clear_line_animation
+                print("CLEAR_LINE_ANIMATION")
             case enum.GameState.PAUSE:
                 self.active_func = self.pause
                 print("PAUSE")
