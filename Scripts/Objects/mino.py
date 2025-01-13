@@ -26,6 +26,7 @@ class Mino():
             case enum.MinoType.T:
                 self.matrix = define.MINO_T_MATRIX
     
+    # 落下中かチェック
     def check_fall(self, fall_speed):
         if fall_speed <= self.fall_counter:
             self.fall_counter = 0
@@ -34,6 +35,7 @@ class Mino():
             self.fall_counter += 1
             return False
     
+    # ミノの移動
     def move_mino(self, move_type):
         match move_type:
             case enum.MinoMoveType.MOVE_RIGHT:
@@ -47,6 +49,7 @@ class Mino():
             case enum.MinoMoveType.FALL:
                 self.left_upper_grid = (self.left_upper_grid[0], self.left_upper_grid[1] + 1)
     
+    # ミノの次の回転インデックスを取得
     def get_next_index(self, add_num):
         index = self.index + add_num
         if index < 0:

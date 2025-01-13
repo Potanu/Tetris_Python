@@ -33,7 +33,7 @@ class GameManager:
     def update(self):
         self.active_func()
         self.draw()
-        self.draw_debug() # ブロックマスへのデバッグ表記（※FPSがかなり落ちる）
+        # self.draw_debug() # ブロックマスへのデバッグ表記（※FPSがかなり落ちる）
     
     # STATE: READY
     def ready(self):

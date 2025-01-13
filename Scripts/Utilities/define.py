@@ -21,6 +21,32 @@ SPEED_UP_INTERVAL = 1         # レベルアップ時の速度上昇量
 GAME_OVER_GRID_Y = 2          # ゲームオーバー判定縦マス数
 NEXT_MINO_MAX = 6             # 予告ミノの最大数
 
+GAME_BG_COLOR = "#111111"               # ゲーム背景の色
+GAME_BG_LIMIT_LINE_COLOR = "#FFFFFF"    # リミットラインの色
+GAME_BG_FRAME_LINE_COLOR = "#0000B4"    # フレームラインの色
+GAME_BG_LIMIT_LINE_WIDTH = 1            # リミットラインの幅
+GAME_BG_FRAME_LINE_WIDTH = 2            # フレームラインの幅
+
+NEXT_MINO_SIZE = 10.0                   # 予告ミノのサイズ
+NEXT_MINO_INV_Y = 40.0                  # 予告ミノの縦間隔
+NEXT_MINO_LINE_LENGTH_X = 94.0          # 予告ミノの表示エリアの横幅
+NEXT_MINO_TEXT_COLOR = "#FFFFFF"        # 予告ミノの「NEXT」テキスト色
+NEXT_MINO_TEXT_BG_COLOR = "#0000A0"     # 予告ミノの「NEXT」テキスト背景の色
+NEXT_MINO_TEXT_AREA_Y = 32.0            # 予告ミノの「NEXT」表示エリアの縦幅
+
+USER_GUIDE_FONT_SIZE = 20               # 操作説明文のテキストサイズ
+USER_GUIDE_FONT_INV = 30                # 操作説明文の縦間隔
+USER_GUIDE_TEXT_COLOR = "#FFFFFF"       # 操作説明文のテキスト色
+USER_GUIDE_OFFSET = (200.0, 420.0)      # 操作説明文のテキスト位置
+USER_GUIDE_TEXT = [                     # 操作説明文
+    "A : 左移動",
+    "S : 下移動",
+    "D : 右移動",
+    "P : 一時停止",
+    "→ : 右回転",
+    "← : 左回転"
+]
+
 # -------------------------
 # ミノの設定
 # -------------------------

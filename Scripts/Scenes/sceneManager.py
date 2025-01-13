@@ -1,5 +1,4 @@
 import pygame
-import time
 from pygame.locals import *
 from Utilities import singleton
 from Utilities import enum
@@ -15,13 +14,9 @@ class SceneManager(singleton.Singleton):
     pygame.display.set_caption(u"タイトル")
     
     self.draw_queue = []
-    now_time = time.time()
-    self.fps_starttime = now_time
-    self.fps_count = 0
-    self.fps_view = 0
     self.active_scene = gameScene.GameScene()
     self.is_debug = False
-    self.debug_text_count = 0
+    self.debug_text_count = 0   # デバッグ表示項目が複数行に渡る場合のカウンター
     
   def run(self):
     while True:
@@ -31,10 +26,19 @@ class SceneManager(singleton.Singleton):
       
       # 画面更新
       self.active_scene.update()
-      self.debug()  # デバッグ関連の処理
       self.draw()
+      
+       # デバッグモード切替チェック
+      if pygameManager.PygameManager().is_up(enum.KeyType.DEBUG):
+        self.is_debug = not self.is_debug
+      
       # FPSの固定
-      pygame.time.Clock().tick(define.FPS)
+      elapsed_time = pygame.time.Clock().tick(define.FPS) # millsecond で返ってくる
+      
+      if self.is_debug:
+        fps = 1000 / elapsed_time
+        self.add_debug_text(f"fps={round(fps)}")
+      
     # アプリケーション終了
     pygame.quit()
       
@@ -74,24 +78,6 @@ class SceneManager(singleton.Singleton):
         return titleScene.TitleScene()
       case enum.SceneType.GAME:
         return gameScene.GameScene()
-    
-  def debug(self):
-    if pygameManager.PygameManager().is_up(enum.KeyType.DEBUG):
-      self.is_debug = not self.is_debug
-    
-    # FPS表示
-    fps_endtime = time.time()
-    if 1.0 <= (fps_endtime - self.fps_starttime):
-      self.fps_view = self.fps_count
-      self.fps_count = 0
-      self.fps_starttime = fps_endtime
-    else:
-      self.fps_count += 1
-    
-    if not self.is_debug:
-      return
-    
-    self.add_debug_text(f"fps={self.fps_view}")
   
   def add_debug_text(self, text):
       font = pygame.font.Font(None, 40)
