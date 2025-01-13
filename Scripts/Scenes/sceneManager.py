@@ -16,7 +16,9 @@ class SceneManager(singleton.Singleton):
     self.draw_queue = []
     self.active_scene = gameScene.GameScene()
     self.is_debug = False
-    self.debug_text_count = 0   # デバッグ表示項目が複数行に渡る場合のカウンター
+    self.debug_text_count = 0           # デバッグ表示項目が複数行に渡る場合のカウンター
+    self.old_elapsed_time = 0           # 経過時間保存用（/millseconds)
+    self.fps_view_update_counter = 0    # fps表示更新用カウンター
     
   def run(self):
     while True:
@@ -33,11 +35,7 @@ class SceneManager(singleton.Singleton):
         self.is_debug = not self.is_debug
       
       # FPSの固定
-      elapsed_time = pygame.time.Clock().tick(define.FPS) # millsecond で返ってくる
-      
-      if self.is_debug:
-        fps = 1000 / elapsed_time
-        self.add_debug_text(f"fps={round(fps)}")
+      self.set_frame_rate()
       
     # アプリケーション終了
     pygame.quit()
@@ -78,6 +76,21 @@ class SceneManager(singleton.Singleton):
         return titleScene.TitleScene()
       case enum.SceneType.GAME:
         return gameScene.GameScene()
+  
+  def set_frame_rate(self):
+    elapsed_time = pygame.time.Clock().tick(define.FPS) # millsecond で返ってくる
+    self.fps_view_update_counter += elapsed_time
+    
+    if self.is_debug:
+      if self.fps_view_update_counter > 500:
+        # 0.5秒おきに更新する
+        fps = 1000 / elapsed_time
+        self.old_elapsed_time = elapsed_time
+        self.fps_view_update_counter = 0
+      else:
+        fps = 1000 / self.old_elapsed_time
+      
+      self.add_debug_text(f"FPS : {round(fps)}")
   
   def add_debug_text(self, text):
       font = pygame.font.Font(None, 40)

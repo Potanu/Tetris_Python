@@ -9,7 +9,8 @@ class GameScene(sceneBase.SceneBase):
     def __init__(self):
         self.gameManager = gameManager.GameManager()
         self.gameManager.init()
-        self.userGuideFont = pygame.font.Font("Resources\\NotoSansJP-Medium.ttf", define.USER_GUIDE_FONT_SIZE)
+        self.userGuideFont = pygame.font.Font(define.JP_FONT_PASS, define.USER_GUIDE_FONT_SIZE)
+        self.scoreFont = pygame.font.Font(define.JP_FONT_PASS, define.SCORE_TEXT_FONT_SIZE)
     
     def update(self):
         if self.gameManager.game_state == enum.GameState.END:
@@ -84,10 +85,10 @@ class GameScene(sceneBase.SceneBase):
                                     pygame.Rect(right_upper_pos[0], right_upper_pos[1],
                                                 define.NEXT_MINO_LINE_LENGTH_X, define.NEXT_MINO_TEXT_AREA_Y),
                                     -1, -1, -1)
-        font = pygame.font.Font(None, 30)
+        font = pygame.font.Font(None, define.NEXT_MINO_TEXT_SIZE)
         gTxt = font.render("NEXT", True, define.NEXT_MINO_TEXT_COLOR)
         text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
-                      (next_mino_start_pos[0] + 20.0, 8.0), -1, -1)
+                      (next_mino_start_pos[0] + define.NEXT_MINO_TEXT_POS[0], define.NEXT_MINO_TEXT_POS[1]), -1, -1)
         sceneManager.SceneManager().add_draw_queue(next_mino_frame_up_tuple)
         sceneManager.SceneManager().add_draw_queue(next_mino_frame_down_tuple)
         sceneManager.SceneManager().add_draw_queue(next_mino_frame_right_tuple)
@@ -99,6 +100,21 @@ class GameScene(sceneBase.SceneBase):
         for text in define.USER_GUIDE_TEXT:
             gTxt = self.userGuideFont.render(text, True, define.USER_GUIDE_TEXT_COLOR)
             text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
-                      (define.USER_GUIDE_OFFSET[0], define.USER_GUIDE_OFFSET[1] + (index * define.USER_GUIDE_FONT_INV)), -1, -1)
+                      (define.USER_GUIDE_TEXT_POS[0], define.USER_GUIDE_TEXT_POS[1] + (index * define.USER_GUIDE_FONT_INV)), -1, -1)
             sceneManager.SceneManager().add_draw_queue(text_tuple)
             index += 1
+        
+        # スコア表示
+        gTxt = self.scoreFont.render("スコア", True, define.SCORE_COLOR)
+        text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
+                      define.SCORE_TEXT_POS, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(text_tuple)
+        
+        font = pygame.font.Font(None, define.SCORE_NUM_SIZE)
+        gTxt = font.render(str(self.gameManager.score), True, define.SCORE_COLOR)
+        text_rect = gTxt.get_rect(bottomright=define.SCORE_NUM_POS)
+        text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
+                      text_rect, -1, -1)
+        sceneManager.SceneManager().add_draw_queue(text_tuple)
+        
+        
