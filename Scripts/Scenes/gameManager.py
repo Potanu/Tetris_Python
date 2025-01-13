@@ -99,15 +99,6 @@ class GameManager:
             self.clear_line_animation_list[j].update()
             is_end_all_anim &= self.clear_line_animation_list[j].is_end_anim
         
-        # COMBO表示
-        if self.combo > 0:
-            font = pygame.font.Font(None, define.COMBO_FONT_SIZE)
-            gTxt = font.render("COMBO " + str(self.combo), True, define.COMBO_COLOR)
-            text_rect = gTxt.get_rect(center=define.SCREEN_CENTER_POS)
-            text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
-                        text_rect, -1, -1)
-            sceneManager.SceneManager().add_draw_queue(text_tuple)
-        
         if not is_end_all_anim:
             return
         
@@ -136,7 +127,8 @@ class GameManager:
         
         # スコア加算
         self.combo += 1
-        self.score += len(self.clear_line_list) * self.combo
+        score_index = len(self.clear_line_list) - 1
+        self.score += define.SCORE_LIST[score_index] * self.combo
         
         if self.check_gameover():
             self.change_state(enum.GameState.GAME_OVER)

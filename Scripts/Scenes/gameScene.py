@@ -11,6 +11,7 @@ class GameScene(sceneBase.SceneBase):
         self.gameManager.init()
         self.userGuideFont = pygame.font.Font(define.JP_FONT_PASS, define.USER_GUIDE_FONT_SIZE)
         self.scoreFont = pygame.font.Font(define.JP_FONT_PASS, define.SCORE_TEXT_FONT_SIZE)
+        self.comboFont = pygame.font.Font(define.JP_FONT_PASS, define.COMBO_FONT_SIZE)
     
     def update(self):
         if self.gameManager.game_state == enum.GameState.END:
@@ -112,9 +113,18 @@ class GameScene(sceneBase.SceneBase):
         
         font = pygame.font.Font(None, define.SCORE_NUM_SIZE)
         gTxt = font.render(str(self.gameManager.score), True, define.SCORE_COLOR)
-        text_rect = gTxt.get_rect(bottomright=define.SCORE_NUM_POS)
+        text_rect = gTxt.get_rect(bottomright=define.SCORE_NUM_RIGHT_POS)
         text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
                       text_rect, -1, -1)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
+        
+        # コンボ表示
+        if self.gameManager.combo > 1:
+            combo = self.gameManager.combo - 1
+            gTxt = self.comboFont.render("★COMBO " + str(combo), True, define.COMBO_COLOR)
+            text_rect = gTxt.get_rect(bottomright=define.COMBO_RIGHT_POS)
+            text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
+                        text_rect, -1, -1)
+            sceneManager.SceneManager().add_draw_queue(text_tuple)
         
         

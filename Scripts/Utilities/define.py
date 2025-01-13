@@ -82,10 +82,11 @@ SCORE_COLOR = "#FFFFFF"                 #「スコア」テキスト色
 SCORE_TEXT_FONT_SIZE = 20               #「スコア」テキストサイズ
 SCORE_TEXT_POS = [60.0, 80.0]           #「スコア」テキスト位置
 SCORE_NUM_SIZE = 40                     # スコア点数サイズ
-SCORE_NUM_POS = [GAME_SCREEN_OFFSET[0] - SCORE_TEXT_POS[0], 150.0]           # スコア点数位置
+SCORE_NUM_RIGHT_POS = [GAME_SCREEN_OFFSET[0] - SCORE_TEXT_POS[0], 150.0]           # スコア点数右位置
 
-COMBO_COLOR = "#FFFFFF"                 # COMBOテキスト色
-COMBO_FONT_SIZE = 60                    # COMBOテキストサイズ
+COMBO_COLOR = "#FFFF00"                 # COMBOテキスト色
+COMBO_FONT_SIZE = 20                    # COMBOテキストサイズ
+COMBO_RIGHT_POS = [SCORE_NUM_RIGHT_POS[0], SCORE_NUM_RIGHT_POS[1] + 30.0]
 
 # -------------------------
 # ミノの設定
