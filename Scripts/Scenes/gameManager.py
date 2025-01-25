@@ -34,7 +34,7 @@ class GameManager:
         
     def update(self):
         self.active_func()
-        self.draw()
+        self.draw()   
     
     # STATE: READY
     def ready(self):
@@ -106,7 +106,7 @@ class GameManager:
         
         # 全消しチェック
         is_all_clear = True
-        for y in range(0, define.GAME_GRID_NUM[1] - 1): # 一番下の段は固定ブロックしかないので見ない
+        for y in range(0, define.GAME_GRID_NUM[1]):
             for x in range(1, 1 + define.GAME_GRID_NUM[0]):
                 if self.board_matrix[y][x] != enum.MinoType.NONE:
                     is_all_clear = False
@@ -257,7 +257,7 @@ class GameManager:
             self.board_matrix = np.where(self.board_matrix != 0, self.board_matrix, self.fall_mino_matrix)
             self.fall_mino_matrix = self.clean_matrix()
             self.active_mino = None
-            if self.check_line():
+            if self.check_line_clear():
                 self.change_state(enum.GameState.CLEAR_LINE)
             else:
                 if self.check_gameover():
@@ -266,7 +266,7 @@ class GameManager:
                     self.combo = 0
     
     # 消せるラインがあるかをチェック
-    def check_line(self):
+    def check_line_clear(self):
         for y in range(0, len(self.board_matrix) - 1): # 一番下の段は固定ブロックしかないので見ない
             is_clear = True
             for x in range(0, len(self.board_matrix[0])):

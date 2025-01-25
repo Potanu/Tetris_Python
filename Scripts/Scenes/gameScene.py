@@ -126,5 +126,3 @@ class GameScene(sceneBase.SceneBase):
             text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
                         text_rect, -1, -1)
             sceneManager.SceneManager().add_draw_queue(text_tuple)
-        
-        
