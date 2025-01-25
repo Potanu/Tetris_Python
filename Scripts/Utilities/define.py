@@ -67,8 +67,9 @@ GAME_OVER_GUIDE_TEXT_MIDDLE_POS = [SCREEN_CENTER_POS[0], SCREEN_CENTER_POS[1] + 
 USER_GUIDE_FONT_SIZE = 20               # 操作説明文のテキストサイズ
 USER_GUIDE_FONT_INV = 30                # 操作説明文の縦間隔
 USER_GUIDE_TEXT_COLOR = "#FFFFFF"       # 操作説明文のテキスト色
-USER_GUIDE_TEXT_POS = (150.0, 400.0)    # 操作説明文のテキスト位置
+USER_GUIDE_TEXT_POS = (120.0, 380.0)    # 操作説明文のテキスト位置
 USER_GUIDE_TEXT = [                     # 操作説明文
+    "W : ハードドロップ",
     "A : 左移動",
     "S : 下移動",
     "D : 右移動",

@@ -11,7 +11,7 @@ from Objects import clearMinoAnim
 class GameManager:
     def init(self):
         self.active_mino = None     # 降下中のミノ
-        self.fall_speed = define.DEFAULT_FALL_SPEED # ミノの降下速度
+        self.fall_counter = 0       # ミノの降下タイミング管理用カウンター
         self.clear_line_list = []   # 消える段
         self.clear_line_anim_counter = 0    # ライン消しアニメーション管理用
         self.clear_line_animation_list = [] # ライン消しアニメーション管理用
@@ -235,14 +235,19 @@ class GameManager:
                 self.active_mino.move_mino(enum.MinoMoveType.ROTATE_LEFT)
                 self.update_fall_mino_matrix()
                 self.update_ghost_mino_matrix()
-    
+        elif pygameManager.PygameManager().is_up(enum.KeyType.W):
+            # ハードドロップ
+            self.active_mino.left_upper_grid = self.ghost_mino_left_upper_grid
+            self.fall_mino_matrix = self.ghost_mino_matrix
+            self.fall_counter = define.DEFAULT_FALL_SPEED
+                   
     # ミノの降下処理
     def fall_mino(self):
         # 降下速度を取得
         is_press_down = pygameManager.PygameManager().is_pressed(enum.KeyType.S)
-        fall_speed = define.FALL_HIGH_SPEED if is_press_down else self.fall_speed
+        fall_speed = define.FALL_HIGH_SPEED if is_press_down else define.DEFAULT_FALL_SPEED
         
-        if not self.active_mino.check_fall(fall_speed):
+        if not self.check_fall(fall_speed):
             # 降下タイミングでは無いので処理を抜ける
             return
         
@@ -264,6 +269,15 @@ class GameManager:
                     self.change_state(enum.GameState.GAME_OVER)  
                 else:
                     self.combo = 0
+    
+    # ミノの降下タイミングを管理
+    def check_fall(self, fall_speed):
+        if fall_speed <= self.fall_counter:
+            self.fall_counter = 0
+            return True
+        else:
+            self.fall_counter += 1
+            return False
     
     # 消せるラインがあるかをチェック
     def check_line_clear(self):

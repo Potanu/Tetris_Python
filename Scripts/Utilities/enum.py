@@ -70,6 +70,7 @@ class MinoMoveType(Enum):
     ROTATE_RIGHT = 2,   # 右回転
     ROTATE_LEFT = 3,    # 左回転
     FALL = 4,           # 1マス降下
+    HARD_DROP = 5       # ハードドロップ
 
 # ゲームの状態
 class GameState(Enum):

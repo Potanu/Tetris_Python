@@ -5,7 +5,6 @@ class Mino():
     def __init__(self, mino_type):
         self.index = 0
         self.left_upper_grid = define.START_MINO_GRID
-        self.fall_counter = 0
         self.mino_type = mino_type
         self.set_mino()
     
@@ -25,15 +24,6 @@ class Mino():
                 self.matrix = define.MINO_L_MATRIX
             case enum.MinoType.T:
                 self.matrix = define.MINO_T_MATRIX
-    
-    # 落下中かチェック
-    def check_fall(self, fall_speed):
-        if fall_speed <= self.fall_counter:
-            self.fall_counter = 0
-            return True
-        else:
-            self.fall_counter += 1
-            return False
     
     # ミノの移動
     def move_mino(self, move_type):
