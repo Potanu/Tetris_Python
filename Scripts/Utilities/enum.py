@@ -1,12 +1,12 @@
-import pygame
 from enum import Enum
 from enum import IntEnum
 
 # シーンの種別
 class SceneType(Enum):
-    TITLE = 0,
-    GAME = 1
-
+    SELECT = 0,     # シーン選択
+    GAME = 1,       # ゲーム画面
+    AI_LEARNING = 2 # AI学習
+ 
 # オブジェクトの種別
 class ObjectType(IntEnum):
     BG = 0,     # 背景
@@ -37,20 +37,16 @@ class DrawData(IntEnum):
 
 # キーの種別
 class KeyType(IntEnum):
-    W = pygame.K_w,
-    A = pygame.K_a,
-    S = pygame.K_s,
-    D = pygame.K_d,
-    Q = pygame.K_q,
-    E = pygame.K_e,
-    P = pygame.K_p,
-    H = pygame.K_h,
-    UP = pygame.K_UP,
-    DOWN = pygame.K_DOWN,
-    RIGHT = pygame.K_RIGHT,
-    LEFT = pygame.K_LEFT,
-    SPACE = pygame.K_SPACE,
-    DEBUG = pygame.K_F1  # デバッグ用
+    W = 0,
+    A = 1,
+    S = 2,
+    D = 3,
+    P = 4,
+    RIGHT = 5,
+    LEFT = 6,
+    SPACE = 7,
+    ESC = 8
+    F1 = 9
 
 # ミノの種類
 class MinoType(IntEnum):
@@ -80,4 +76,4 @@ class GameState(Enum):
     CLEAR_LINE_ANIM = 3,# ラインクリア演出中
     PAUSE = 4,          # 一時停止
     GAME_OVER = 5,      # ゲームオーバー
-    END = 6             # 終了
+    END = 6,            # 終了

@@ -7,6 +7,18 @@ FPS = 60
 JP_FONT_PASS = "Resources\\NotoSansJP-Medium.ttf"       # 日本語フォントのパス
 
 # =========================
+# シーン選択
+# =========================
+SELECT_BG_COLOR = "#000055"         # 背景色
+SELECT_TEXT_COLOR = "#FFFFFF"       # テキスト色
+SELECT_TEXT_SIZE = 40               # テキストサイズ
+SELECT_TEXT_POS = (150.0, 150.0)    # 操作説明文のテキスト位置
+SELECT_TEXT = [                     # 説明文のテキスト
+    "Ｗキー : ゲーム画面へ",
+    "Ｓキー : AI学習画面へ (実装作業中)"
+]
+
+# =========================
 # ゲーム
 # =========================
 GAME_SCREEN_OFFSET = (320, 0) # ゲームフィールドのオフセット
@@ -65,9 +77,9 @@ GAME_OVER_GUIDE_TEXT_SIZE = 60               #「Please Enter SPACE KEY」テキ
 GAME_OVER_GUIDE_TEXT_MIDDLE_POS = [SCREEN_CENTER_POS[0], SCREEN_CENTER_POS[1] + 50.0]    #「Please Enter SPACE KEY」テキスト中央位置
 
 USER_GUIDE_FONT_SIZE = 20               # 操作説明文のテキストサイズ
-USER_GUIDE_FONT_INV = 30                # 操作説明文の縦間隔
+USER_GUIDE_FONT_INV = 40                # 操作説明文の縦間隔
 USER_GUIDE_TEXT_COLOR = "#FFFFFF"       # 操作説明文のテキスト色
-USER_GUIDE_TEXT_POS = (120.0, 380.0)    # 操作説明文のテキスト位置
+USER_GUIDE_TEXT_POS = (120.0, 270.0)    # 操作説明文のテキスト位置
 USER_GUIDE_TEXT = [                     # 操作説明文
     "W : ハードドロップ",
     "A : 左移動",
@@ -76,6 +88,7 @@ USER_GUIDE_TEXT = [                     # 操作説明文
     "P : 一時停止",
     "→ : 右回転",
     "← : 左回転",
+    "ESC : ゲーム終了",
     "F1 : デバッグ表示"
 ]
 

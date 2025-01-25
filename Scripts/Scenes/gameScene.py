@@ -15,7 +15,7 @@ class GameScene(sceneBase.SceneBase):
     
     def update(self):
         if self.gameManager.game_state == enum.GameState.END:
-            sceneManager.SceneManager().move_Scene(enum.SceneType.TITLE)
+            sceneManager.SceneManager().move_Scene(enum.SceneType.SELECT)
             return
         
         self.gameManager.update()
