@@ -1,6 +1,7 @@
 import pygame
 from Utilities import enum
 from Utilities import define
+from Utilities import pygameManager
 from Scenes import sceneBase
 from Scenes import sceneManager
 
@@ -9,9 +10,9 @@ class SelectScene(sceneBase.SceneBase):
         self.font = pygame.font.Font(define.JP_FONT_PASS, define.SELECT_TEXT_SIZE)
     
     def update(self):
-        if sceneManager.SceneManager().key_input_state_is_pressed[enum.KeyType.W]:
+        if (pygameManager.PygameManager().is_pressed(pygame.K_w)):
             sceneManager.SceneManager().move_Scene(enum.SceneType.GAME)
-        elif sceneManager.SceneManager().key_input_state_is_pressed[enum.KeyType.S]:
+        elif (pygameManager.PygameManager().is_pressed(pygame.K_s)):
             sceneManager.SceneManager().move_Scene(enum.SceneType.GAME)
             
         self.draw()
