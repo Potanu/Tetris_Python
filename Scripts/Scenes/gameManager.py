@@ -5,7 +5,6 @@ from Utilities import enum
 from Utilities import define
 from Utilities import pygameManager
 from Scenes import sceneManager
-from Scenes import gameScene
 from Objects import mino
 from Objects import clearMinoAnim
 
@@ -31,6 +30,7 @@ class GameManager:
         self.key_input_state_is_down = [False] * len(enum.KeyType)      # キーの押下状態（押下した瞬間）
         self.key_input_state_is_up = [False] * len(enum.KeyType)        # キーの押下状態（離した瞬間）
         self.key_input_state_is_pressed = [False] * len(enum.KeyType)   # キーの押下状態（押下中）
+        
         for y in range(0, define.NEXT_MINO_MAX):
             type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
             self.next_mino_list.append(mino.Mino(type))
@@ -108,7 +108,10 @@ class GameManager:
             return
         
         self.clear_line_animation_list.clear()
-        
+        self.change_state(enum.GameState.DROP_LINE)
+    
+    # ラインクリア後、ブロックを下に詰める処理 
+    def drop_line(self):
         # 全消しチェック
         is_all_clear = True
         for y in range(0, define.GAME_GRID_NUM[1]):
@@ -396,6 +399,8 @@ class GameManager:
                 self.active_func = self.clear_line
             case enum.GameState.CLEAR_LINE_ANIM:
                 self.active_func = self.clear_line_animation
+            case enum.GameState.DROP_LINE:
+                self.active_func = self.drop_line
             case enum.GameState.PAUSE:
                 self.active_func = self.pause
             case enum.GameState.GAME_OVER:

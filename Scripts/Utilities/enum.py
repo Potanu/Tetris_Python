@@ -74,6 +74,7 @@ class GameState(Enum):
     FALL = 1,           # ミノの降下中
     CLEAR_LINE = 2,     # ラインクリア
     CLEAR_LINE_ANIM = 3,# ラインクリア演出中
-    PAUSE = 4,          # 一時停止
-    GAME_OVER = 5,      # ゲームオーバー
-    END = 6,            # 終了
+    DROP_LINE = 4,      # ラインクリア後、ブロックを下に詰める処理
+    PAUSE = 5,          # 一時停止
+    GAME_OVER = 6,      # ゲームオーバー
+    END = 7,            # 終了
