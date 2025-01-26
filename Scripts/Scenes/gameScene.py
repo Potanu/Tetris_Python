@@ -8,7 +8,8 @@ from Scenes import gameManager
 class GameScene(sceneBase.SceneBase):
     def __init__(self):
         self.gameManager = gameManager.GameManager()
-        self.gameManager.init()
+        train_flag = False
+        self.gameManager.init(train_flag)
         self.userGuideFont = pygame.font.Font(define.JP_FONT_PASS, define.USER_GUIDE_FONT_SIZE)
         self.scoreFont = pygame.font.Font(define.JP_FONT_PASS, define.SCORE_TEXT_FONT_SIZE)
         self.comboFont = pygame.font.Font(define.JP_FONT_PASS, define.COMBO_FONT_SIZE)

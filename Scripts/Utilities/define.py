@@ -4,18 +4,18 @@
 SCREEN_SIZE = (1000, 660)
 SCREEN_CENTER_POS = [SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2]
 FPS = 60
-JP_FONT_PASS = "Resources\\NotoSansJP-Medium.ttf"       # 日本語フォントのパス
+JP_FONT_PASS = "..\\Resources\\NotoSansJP-Medium.ttf"       # 日本語フォントのパス
 
 # =========================
 # シーン選択
 # =========================
 SELECT_BG_COLOR = "#000055"         # 背景色
 SELECT_TEXT_COLOR = "#FFFFFF"       # テキスト色
-SELECT_TEXT_SIZE = 40               # テキストサイズ
-SELECT_TEXT_POS = (150.0, 150.0)    # 操作説明文のテキスト位置
+SELECT_TEXT_SIZE = 30               # テキストサイズ
+SELECT_TEXT_POS = (110.0, 150.0)    # 操作説明文のテキスト位置
 SELECT_TEXT = [                     # 説明文のテキスト
     "Ｗキー : ゲーム画面へ",
-    "Ｓキー : AI学習画面へ (実装作業中)"
+    "Ｓキー : 学習済みエージェントのプレイ画面へ (実装作業中)"
 ]
 
 # =========================

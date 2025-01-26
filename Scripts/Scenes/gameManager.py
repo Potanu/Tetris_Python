@@ -9,10 +9,11 @@ from Objects import mino
 from Objects import clearMinoAnim
 
 class GameManager:
-    def init(self):
-        self.active_mino = None     # 降下中のミノ
-        self.fall_counter = 0       # ミノの降下タイミング管理用カウンター
-        self.clear_line_list = []   # 消える段
+    def init(self, train_flag):
+        self.train_flag = train_flag        # DQN学習フラグ
+        self.active_mino = None             # 降下中のミノ
+        self.fall_counter = 0               # ミノの降下タイミング管理用カウンター
+        self.clear_line_list = []           # 消える段
         self.clear_line_anim_counter = 0    # ライン消しアニメーション管理用
         self.clear_line_animation_list = [] # ライン消しアニメーション管理用
         self.level = 1  # レベル
@@ -20,10 +21,10 @@ class GameManager:
         self.fall_mino_matrix = self.board_matrix.copy()    # 降下中ミノの描画用マトリクス
         self.ghost_mino_matrix = self.board_matrix.copy()   # ゴーストミノの描画用マトリクス
         self.ghost_mino_left_upper_grid = define.START_MINO_GRID   # ゴーストミノの左上マス座標
-        self.board_matrix[-1, :] = -1   # 下辺の透明ブロック
-        self.board_matrix[:,  0] = -1   # 左辺の透明ブロック
-        self.board_matrix[:, -1] = -1   # 右辺の透明ブロック
-        self.next_mino_list = []    # 予告ミノ
+        self.board_matrix[-1, :] = -1       # 下辺の透明ブロック
+        self.board_matrix[:,  0] = -1       # 左辺の透明ブロック
+        self.board_matrix[:, -1] = -1       # 右辺の透明ブロック
+        self.next_mino_list = []            # 予告ミノ
         self.ready_counter = define.READY_FRAME    # ゲーム開始までのフレーム
         self.score = 0  # スコア
         self.combo = 0  # 連続ライン消し数
@@ -34,10 +35,16 @@ class GameManager:
         for y in range(0, define.NEXT_MINO_MAX):
             type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
             self.next_mino_list.append(mino.Mino(type))
-        self.change_state(enum.GameState.READY)
+        
+        if self.train_flag:
+            self.change_state(enum.GameState.FALL)  # 強化学習中の場合、準備画面を省略する
+        else:
+            self.change_state(enum.GameState.READY)
         
     def update(self):
-        self.update_key_input()
+        if not self.train_flag:
+            self.update_key_input()
+            
         self.active_func()
         self.draw()   
     
@@ -68,8 +75,8 @@ class GameManager:
         sceneManager.SceneManager().add_draw_queue(text_tuple)
         self.ready_counter -= 1
    
-    # STATE: GAME     
-    def game(self):
+    # STATE: FALL     
+    def fall(self):
         if self.active_mino == None:
             # 操作ミノの作成
             self.create_mino()
@@ -78,6 +85,23 @@ class GameManager:
         # ミノの操作
         self.check_key_input()
         self.fall_mino()
+    
+    # STATE: PROCESS_LANDING
+    def process_landing(self):
+        self.board_matrix = np.where(self.board_matrix != 0, self.board_matrix, self.fall_mino_matrix)
+        self.fall_mino_matrix = self.clean_matrix()
+        self.active_mino = None
+        if self.check_line_clear():
+            # 消せるラインがある場合
+            self.change_state(enum.GameState.CLEAR_LINE)
+        else:
+            if self.check_gameover():
+                # ゲームオーバー
+                self.change_state(enum.GameState.GAME_OVER)
+            else:
+                # 次のミノ出現へ
+                self.combo = 0
+                self.change_state(enum.GameState.FALL)
     
     # ライン消し
     def clear_line(self):
@@ -95,7 +119,10 @@ class GameManager:
                 anim.set_data(grid)
                 self.clear_line_animation_list.append(anim)
         
-        self.change_state(enum.GameState.CLEAR_LINE_ANIM)
+        if self.train_flag:
+            self.change_state(enum.GameState.DROP_LINE)  # 強化学習中の場合、ライン消しアニメーションを省略する
+        else:
+            self.change_state(enum.GameState.CLEAR_LINE_ANIM)
     
     # ライン消しアニメーション
     def clear_line_animation(self):
@@ -185,8 +212,14 @@ class GameManager:
     
     # STATE: GAME_OVER  
     def game_over(self):
+        if self.train_flag:
+           # 強化学習中は画面をスキップする 
+           self.init(self.train_flag)
+           return
+        
+        
         if self.key_input_state_is_down[enum.KeyType.SPACE]:
-            self.init()
+            self.init(self.train_flag)
             self.change_state(enum.GameState.READY)
             return
         
@@ -271,16 +304,7 @@ class GameManager:
             self.update_fall_mino_matrix()
         else:
             # 接地
-            self.board_matrix = np.where(self.board_matrix != 0, self.board_matrix, self.fall_mino_matrix)
-            self.fall_mino_matrix = self.clean_matrix()
-            self.active_mino = None
-            if self.check_line_clear():
-                self.change_state(enum.GameState.CLEAR_LINE)
-            else:
-                if self.check_gameover():
-                    self.change_state(enum.GameState.GAME_OVER)  
-                else:
-                    self.combo = 0
+            self.change_state(enum.GameState.PROCESS_LANDING)
     
     # ミノの降下タイミングを管理
     def check_fall(self, fall_speed):
@@ -394,7 +418,9 @@ class GameManager:
             case enum.GameState.READY:
                 self.active_func = self.ready
             case enum.GameState.FALL:
-                self.active_func = self.game
+                self.active_func = self.fall
+            case enum.GameState.PROCESS_LANDING:
+                self.active_func = self.process_landing
             case enum.GameState.CLEAR_LINE:
                 self.active_func = self.clear_line
             case enum.GameState.CLEAR_LINE_ANIM:

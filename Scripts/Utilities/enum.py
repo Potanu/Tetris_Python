@@ -70,11 +70,20 @@ class MinoMoveType(Enum):
 
 # ゲームの状態
 class GameState(Enum):
-    READY = 0,          # 待機
-    FALL = 1,           # ミノの降下中
-    CLEAR_LINE = 2,     # ラインクリア
-    CLEAR_LINE_ANIM = 3,# ラインクリア演出中
-    DROP_LINE = 4,      # ラインクリア後、ブロックを下に詰める処理
-    PAUSE = 5,          # 一時停止
-    GAME_OVER = 6,      # ゲームオーバー
-    END = 7,            # 終了
+    READY = 0,              # 待機
+    FALL = 1,               # ミノの降下中
+    PROCESS_LANDING = 2,    # ミノの接地時の処理
+    CLEAR_LINE = 3,         # ラインクリア
+    CLEAR_LINE_ANIM = 4,    # ラインクリア演出中
+    DROP_LINE = 5,          # ラインクリア後、ブロックを下に詰める処理
+    PAUSE = 6,              # 一時停止
+    GAME_OVER = 7,          # ゲームオーバー
+    END = 8,                # 終了
+
+# 強化学習用のアクション定義
+class ACTION_SPACE_TYPE(Enum):
+    MOVE_RIGHT = 0,     # 右移動
+    MOVE_LEFT = 1,      # 左移動
+    ROTATE_RIGHT = 2,   # 右回転
+    ROTATE_LEFT = 3,    # 左回転
+    HARD_DROP = 4       # ハードドロップ
