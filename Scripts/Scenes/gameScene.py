@@ -35,7 +35,7 @@ class GameScene(sceneBase.SceneBase):
                     bg_tuple = (enum.ObjectType.BG, 0, enum.DrawType.RECT, -1, define.GAME_BG_COLOR,
                                 pygame.Rect(pos_x, pos_y, define.BLOCK_SIZE[0], define.BLOCK_SIZE[1]), -1, -1, -1)
                     sceneManager.SceneManager().add_draw_queue(bg_tuple)
-    
+        
         # ゲーム部分の枠
         line_length_x = define.GAME_GRID_NUM[0] * define.BLOCK_SIZE[0]
         line_length_y = define.GAME_GRID_NUM[1] * define.BLOCK_SIZE[1]

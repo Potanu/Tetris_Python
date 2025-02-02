@@ -107,13 +107,13 @@ class GameManager:
     def clear_line(self):
         # ラインのミノを全て削除
         for y in range(0, len(self.clear_line_list)):
-            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+            for x in range(1, define.BOARD_GRID_NUM[0] - 1):
                 index_y = self.clear_line_list[y]
                 self.board_matrix[index_y][x] = enum.MinoType.NONE
         
         # ライン消しアニメーション設定
         for y in range(0, len(self.clear_line_list)):
-            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+            for x in range(1, define.BOARD_GRID_NUM[0] - 1):
                 anim = clearMinoAnim.ClearMinoAnim()
                 grid = (x, self.clear_line_list[y])
                 anim.set_data(grid)
@@ -142,16 +142,18 @@ class GameManager:
         # 全消しチェック
         is_all_clear = True
         for y in range(0, define.GAME_GRID_NUM[1]):
-            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+            for x in range(1, define.BOARD_GRID_NUM[0] - 1):
                 if self.board_matrix[y][x] != enum.MinoType.NONE:
                     is_all_clear = False
                     break
+            if not is_all_clear:
+                break
         
         if not is_all_clear:
         # 全消しでなければクリアした分の段を下に詰める
-            for y in range(1, 1 + define.GAME_GRID_NUM[1]):
+            for y in range(1, define.BOARD_GRID_NUM[1] - 1):
                 top_mino_index = -1
-                for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+                for x in range(1, define.BOARD_GRID_NUM[0] - 1):
                     if enum.MinoType.NONE < self.board_matrix[y][x]:
                         top_mino_index = y
                         break
@@ -174,9 +176,9 @@ class GameManager:
     # クリアした分の段を下に詰める         
     def shift_down(self, top_mino_index):
         clear_index = -1
-        for y in reversed(range(top_mino_index, 1 + define.GAME_GRID_NUM[1])):
+        for y in reversed(range(top_mino_index, define.BOARD_GRID_NUM[1] - 1)):
             is_clear = True
-            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+            for x in range(1, define.BOARD_GRID_NUM[0] - 1):
                 if enum.MinoType.NONE < self.board_matrix[y][x]:
                     is_clear = False
                     break
@@ -187,7 +189,7 @@ class GameManager:
         
         if 0 < clear_index:
             for y in reversed(range(top_mino_index, clear_index + 1)):
-                for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+                for x in range(1, define.BOARD_GRID_NUM[0] - 1):
                     if y == top_mino_index:
                         self.board_matrix[y][x] = enum.MinoType.NONE
                     else:
@@ -344,7 +346,7 @@ class GameManager:
     def check_gameover(self):
         is_gameover = False
         for y in range(0, define.GAME_OVER_GRID_Y):
-            for x in range(1, 1 + define.GAME_GRID_NUM[0]):
+            for x in range(1, define.BOARD_GRID_NUM[0] - 1):
                 if self.board_matrix[y][x] != enum.MinoType.NONE:
                     is_gameover = True
                     break
@@ -518,7 +520,7 @@ class GameManager:
                     block_tuple = (enum.ObjectType.OBJECT, 0, enum.DrawType.RECT_ALPHA, -1, color,
                                 pygame.Rect(pos_x + 1, pos_y + 1, define.BLOCK_SIZE[0] - 2, define.BLOCK_SIZE[1] - 2), -1, -1, -1)
                     sceneManager.SceneManager().add_draw_queue(block_tuple)
-                
+        
         draw_matrix(self.board_matrix, "FF")
         draw_matrix(self.fall_mino_matrix, "FF")
         draw_matrix(self.ghost_mino_matrix, define.GHOST_MINO_ALPHA)

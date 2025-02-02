@@ -35,6 +35,9 @@ SPEED_UP_INTERVAL = 1         # レベルアップ時の速度上昇量
 GAME_OVER_GRID_Y = 2          # ゲームオーバー判定縦マス数
 NEXT_MINO_MAX = 6             # 予告ミノの最大数
 
+# 強化学習用
+EMPTY_BLOCK_PENALTY = 1       # 空きブロックペナルティ
+
 # スコア
 SCORE_LIST = [
     10, # 1段消し
