@@ -36,7 +36,9 @@ GAME_OVER_GRID_Y = 2          # ゲームオーバー判定縦マス数
 NEXT_MINO_MAX = 6             # 予告ミノの最大数
 
 # 強化学習用
-EMPTY_BLOCK_PENALTY = 1       # 空きブロックペナルティ
+EMPTY_BLOCK_PENALTY = -1      # 空きブロックペナルティ
+GAME_OVER_PENALTY = -1000     # ゲームオーバーペナルティ
+ALL_BLOCK_CLEAR_REWARD = 100  # 全消し報酬
 
 # スコア
 SCORE_LIST = [

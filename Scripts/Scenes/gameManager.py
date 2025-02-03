@@ -139,17 +139,7 @@ class GameManager:
     
     # ラインクリア後、ブロックを下に詰める処理 
     def drop_line(self):
-        # 全消しチェック
-        is_all_clear = True
-        for y in range(0, define.GAME_GRID_NUM[1]):
-            for x in range(1, define.BOARD_GRID_NUM[0] - 1):
-                if self.board_matrix[y][x] != enum.MinoType.NONE:
-                    is_all_clear = False
-                    break
-            if not is_all_clear:
-                break
-        
-        if not is_all_clear:
+        if self.check_all_block_clear() == False:
         # 全消しでなければクリアした分の段を下に詰める
             for y in range(1, define.BOARD_GRID_NUM[1] - 1):
                 top_mino_index = -1
@@ -341,6 +331,19 @@ class GameManager:
                     continue
                 return False
         return True
+    
+    # ブロック全消し判定
+    def check_all_block_clear(self):
+        is_all_clear = True
+        for y in range(0, define.GAME_GRID_NUM[1]):
+            for x in range(1, define.BOARD_GRID_NUM[0] - 1):
+                if self.board_matrix[y][x] != enum.MinoType.NONE:
+                    is_all_clear = False
+                    break
+            if not is_all_clear:
+                break
+            
+        return is_all_clear
     
     # ゲームオーバー判定
     def check_gameover(self):
