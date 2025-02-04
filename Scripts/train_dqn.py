@@ -13,5 +13,5 @@ model = DQN("MlpPolicy", env, verbose=1)
 model.learn(total_timesteps=100000)
 
 # 学習済みモデルを保存
-save_path = os.path.join(os.pardir, "models", "dqn_agent")
+save_path = os.path.join(os.pardir, "Models", "dqn_agent")
 model.save(save_path)

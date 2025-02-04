@@ -53,6 +53,7 @@ class GameManager:
         if (self.ready_counter <= 0):
             self.ready_counter = define.READY_FRAME
             self.change_state(enum.GameState.FALL)
+            sceneManager.SceneManager().call_bgm(enum.bgmType.GAME)
             return
         
         string = ""
@@ -123,6 +124,7 @@ class GameManager:
             self.change_state(enum.GameState.DROP_LINE)  # 強化学習中の場合、ライン消しアニメーションを省略する
         else:
             self.change_state(enum.GameState.CLEAR_LINE_ANIM)
+            sceneManager.SceneManager().call_se(enum.SeType.CLEAR_LINE)
     
     # ライン消しアニメーション
     def clear_line_animation(self):
@@ -139,7 +141,9 @@ class GameManager:
     
     # ラインクリア後、ブロックを下に詰める処理 
     def drop_line(self):
-        if self.check_all_block_clear() == False:
+        if self.check_all_block_clear():
+            sceneManager.SceneManager().call_se(enum.SeType.CLEAR_ALL_BLOCK)
+        else:
         # 全消しでなければクリアした分の段を下に詰める
             for y in range(1, define.BOARD_GRID_NUM[1] - 1):
                 top_mino_index = -1
@@ -185,6 +189,9 @@ class GameManager:
                     else:
                         self.board_matrix[y][x] = self.board_matrix[y - 1][x]
             
+            if not self.train_flag:
+                sceneManager.SceneManager().call_se(enum.SeType.PUT_BLOCK)
+            
             if top_mino_index < clear_index:
                 self.shift_down(top_mino_index + 1)
    
@@ -192,6 +199,9 @@ class GameManager:
     def pause(self):
         if self.key_input_state_is_up[enum.KeyType.P]:
             self.change_state(enum.GameState.FALL)
+            
+            if not self.train_flag:
+                sceneManager.SceneManager().pause_sound(False)
             return
         
         fill_tuple = (enum.ObjectType.UI, 10, enum.DrawType.FILL, -1, define.PAUSE_SCREEN_BG_COLOR, -1, -1, -1, -1)
@@ -239,11 +249,17 @@ class GameManager:
         if (self.key_input_state_is_up[enum.KeyType.ESC]):
             # ゲーム終了
             self.change_state(enum.GameState.END)
+            
+            if not self.train_flag:
+                sceneManager.SceneManager().stop_sound()
             return
         
         if (self.key_input_state_is_up[enum.KeyType.P]):
             # ゲーム一時停止
             self.change_state(enum.GameState.PAUSE)
+            
+            if not self.train_flag:
+                sceneManager.SceneManager().pause_sound(True)
             return
         
         if (self.key_input_state_is_up[enum.KeyType.D]):
@@ -297,6 +313,9 @@ class GameManager:
         else:
             # 接地
             self.change_state(enum.GameState.PROCESS_LANDING)
+            
+            if not self.train_flag:
+                sceneManager.SceneManager().call_se(enum.SeType.PUT_BLOCK)
     
     # ミノの降下タイミングを管理
     def check_fall(self, fall_speed):

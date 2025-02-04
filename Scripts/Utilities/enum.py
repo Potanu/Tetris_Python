@@ -80,6 +80,18 @@ class GameState(Enum):
     GAME_OVER = 7,          # ゲームオーバー
     END = 8,                # 終了
 
+# BGM
+class bgmType(IntEnum):
+    # BGM
+    GAME = 0,               # デフォルトBGM
+
+# SE 
+class SeType(IntEnum):
+    # SE
+    PUT_BLOCK = 0,          # ブロック接地
+    CLEAR_LINE = 1,         # ライン消し
+    CLEAR_ALL_BLOCK = 2     # ブロック全消し
+
 # 強化学習用のアクション定義
 class ACTION_SPACE_TYPE(Enum):
     MOVE_RIGHT = 0,     # 右移動

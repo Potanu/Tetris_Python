@@ -4,7 +4,7 @@
 SCREEN_SIZE = (1000, 660)
 SCREEN_CENTER_POS = [SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2]
 FPS = 60
-JP_FONT_PASS = "..\\Resources\\NotoSansJP-Medium.ttf"       # 日本語フォントのパス
+JP_FONT_PASS = "..\\Resources\\Fonts\\NotoSansJP-Medium.ttf"     # 日本語フォントのパス
 
 # =========================
 # シーン選択
@@ -19,6 +19,19 @@ SELECT_TEXT = [                     # 説明文のテキスト
 ]
 
 # =========================
+# サウンド
+# =========================
+SOUND_PASS = "..\\Resources\\Sounds\\"  # サウンドフォルダパス
+
+# BGM
+GAME_BGM = SOUND_PASS + "tetris_bgm.mp3"      # デフォルトBGM
+    
+# SE
+PUT_BLOCK_SE = SOUND_PASS + "put_block_se.mp3"               # ブロック接地
+CLEAR_LINE_SE = SOUND_PASS + "clear_line_se.mp3"             # ライン消し
+CLEAR_ALL_BLOCK_SE = SOUND_PASS + "clear_all_block_se.mp3"   # ブロック全消し
+
+# =========================
 # ゲーム
 # =========================
 GAME_SCREEN_OFFSET = (320, 0) # ゲームフィールドのオフセット
@@ -30,7 +43,7 @@ READY_FRAME = 90.0            # ゲーム開始までのフレーム
 DEFAULT_FALL_SPEED = 48       # 何フレーム間隔で降下するか
 FALL_HIGH_SPEED = 1           # 何フレーム間隔で降下するか（降下キー押下時）
 LEVEL_UP_COUNT = 10           # 何段ミノを消したらレベルが上がるか
-CLEAR_LINE_ANIM_SPEED = 10    # ライン消し演出速度
+CLEAR_LINE_ANIM_SPEED = 16    # ライン消し演出速度
 SPEED_UP_INTERVAL = 1         # レベルアップ時の速度上昇量
 GAME_OVER_GRID_Y = 2          # ゲームオーバー判定縦マス数
 NEXT_MINO_MAX = 6             # 予告ミノの最大数

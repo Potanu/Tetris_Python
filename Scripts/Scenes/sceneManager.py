@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+import numpy as np
 from Utilities import singleton
 from Utilities import enum
 from Utilities import define
@@ -19,6 +20,16 @@ class SceneManager(singleton.Singleton):
     self.debug_text_count = 0           # デバッグ表示項目が複数行に渡る場合のカウンター
     self.old_elapsed_time = 0           # 経過時間保存用（/millseconds)
     self.fps_view_update_counter = 0    # fps表示更新用カウンター
+    
+    # サウンド初期化
+    self.init_sound()
+ 
+  def init_sound(self):
+    pygame.mixer.init()
+    self.se_list = np.zeros(len(enum.SeType), dtype=pygame.mixer.Sound)
+    self.se_list[enum.SeType.PUT_BLOCK] = pygame.mixer.Sound(define.PUT_BLOCK_SE)
+    self.se_list[enum.SeType.CLEAR_LINE] = pygame.mixer.Sound(define.CLEAR_LINE_SE)
+    self.se_list[enum.SeType.CLEAR_ALL_BLOCK] = pygame.mixer.Sound(define.CLEAR_ALL_BLOCK_SE)
     
   def run(self):
     while True:
@@ -63,6 +74,27 @@ class SceneManager(singleton.Singleton):
     pygame.display.flip()
     self.draw_queue.clear()
     self.debug_text_count = 0
+  
+  def call_bgm(self, type):
+    match type:
+      case enum.bgmType.GAME:
+        pygame.mixer.music.load(define.GAME_BGM)  # BGM読み込み
+        pygame.mixer.music.play(loops=-1)         # BGM再生
+  
+  def call_se(self, type):
+    if type < 0 or type >= len(enum.SeType):
+      return
+    
+    self.se_list[type].play()
+  
+  def stop_sound(self):
+    pygame.mixer.music.stop()
+  
+  def pause_sound(self, state):
+    if state:
+      pygame.mixer.music.pause()
+    else:
+      pygame.mixer.music.unpause()
   
   def add_draw_queue(self, tuple):
     self.draw_queue.append(tuple)
