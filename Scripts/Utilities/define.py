@@ -49,6 +49,7 @@ GAME_OVER_GRID_Y = 2          # ゲームオーバー判定縦マス数
 NEXT_MINO_MAX = 6             # 予告ミノの最大数
 
 # 強化学習用
+NO_EMPTY_BLOCK_REWARD = 10    # 接地時に空きブロックが発生しなかった場合の報酬
 EMPTY_BLOCK_PENALTY = -1      # 空きブロックペナルティ
 GAME_OVER_PENALTY = -1000     # ゲームオーバーペナルティ
 ALL_BLOCK_CLEAR_REWARD = 100  # 全消し報酬

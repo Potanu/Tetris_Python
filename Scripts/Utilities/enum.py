@@ -93,7 +93,7 @@ class SeType(IntEnum):
     CLEAR_ALL_BLOCK = 2     # ブロック全消し
 
 # 強化学習用のアクション定義
-class ACTION_SPACE_TYPE(Enum):
+class ACTION_SPACE_TYPE(IntEnum):
     MOVE_RIGHT = 0,     # 右移動
     MOVE_LEFT = 1,      # 左移動
     ROTATE_RIGHT = 2,   # 右回転

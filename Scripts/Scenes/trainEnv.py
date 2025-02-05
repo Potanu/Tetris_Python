@@ -31,6 +31,7 @@ class TrainEnv(gymnasium.Env):
         self.gameManager.init(train_flag)
         self.done = False
         self.render_counter = 0
+        self.elapsed_step = 0
         return self.get_state(), {}
     
     def step(self, action):
@@ -48,6 +49,7 @@ class TrainEnv(gymnasium.Env):
         
         # ゲーム終了フラグを確認
         done = self.gameManager.game_state == enum.GameState.GAME_OVER
+        self.elapsed_step += 1
         
         # エピソードが途中で切り捨てられたかどうか
         truncated = False   # ここでは常にFalseにしておく
@@ -55,11 +57,8 @@ class TrainEnv(gymnasium.Env):
         # 追加情報
         info = {}   # ここでは特になし
         
-        if self.render_counter % 500 == 0:
-            # デバッグ表示
-            self.render(reward)
-        
-        self.render_counter += 1
+        # デバッグ表示
+        self.render(reward)
         
         return state, reward, done, truncated, info
     
@@ -95,12 +94,12 @@ class TrainEnv(gymnasium.Env):
         
         if self.gameManager.game_state == enum.GameState.GAME_OVER:
             # ゲームオーバーの場合、特大ペナルティを与える
-            reward = define.GAME_OVER_PENALTY
+            reward += define.GAME_OVER_PENALTY
         elif self.gameManager.game_state == enum.GameState.DROP_LINE:
             # ライン消しが発生した場合、スコアをそのまま報酬として与える
             combo = self.gameManager.combo + 1
             score_index = len(self.gameManager.clear_line_list) - 1
-            reward = define.SCORE_LIST[score_index] * combo
+            reward += define.SCORE_LIST[score_index] * combo
             
             if self.gameManager.check_all_block_clear():
                 # 全消ししたらさらに報酬を与える
@@ -139,13 +138,23 @@ class TrainEnv(gymnasium.Env):
                         break
                     empty_block_counter += 1
             
-            if (empty_block_counter > 0 and penalty_rate == 0.0):
-                reward = empty_block_counter * define.EMPTY_BLOCK_PENALTY * penalty_rate
-                    
+            if empty_block_counter == 0:
+                reward += define.NO_EMPTY_BLOCK_REWARD
+            elif (empty_block_counter > 0 and penalty_rate == 0.0):
+                reward += empty_block_counter * define.EMPTY_BLOCK_PENALTY * penalty_rate
+        
+        if self.elapsed_step > 0 and self.elapsed_step % 100:
+            # 長く生き延びて欲しいので、100ステップ生き延びるごとに報酬を与える
+            reward += 5
+        
         return reward
 
     # デバッグ表示
     def render(self, reward):
+        self.render_counter += 1
+        if self.render_counter % 500 != 0:
+            return
+        
         # ボード状態の表示
         all_array = np.where(self.gameManager.board_matrix == 0, self.gameManager.fall_mino_matrix, self.gameManager.board_matrix)
         # 外周を削除するために内側を取り出す
