@@ -8,15 +8,16 @@ env = trainEnv.TrainEnv()
 
 # DQNエージェントを初期化
 model = DQN(
-    "MlpPolicy",
+    "MultiInputPolicy",
     env,
+    buffer_size=100_000,          # リプレイバッファ容量
     exploration_initial_eps=1.0,  # 最初の行動のランダム率
-    exploration_final_eps=0.05,   # 最終的に0.05%の確率でランダム行動
-    exploration_fraction=0.1,     # 10% の学習期間でランダム率を減少
+    exploration_final_eps=0.050,   # 最終的に0.05%の確率でランダム行動
+    exploration_fraction=0.10,     # 10% の学習期間でランダム率を減少
     verbose=1)
 
 # 学習を開始
-model.learn(total_timesteps=100000)
+model.learn(total_timesteps=100_000)
 
 # 学習済みモデルを保存
 save_path = os.path.join(os.pardir, "Models", "dqn_agent")

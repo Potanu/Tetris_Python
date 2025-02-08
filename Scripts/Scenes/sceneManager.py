@@ -108,8 +108,8 @@ class SceneManager(singleton.Singleton):
         return selectScene.SelectScene()
       case enum.SceneType.GAME:
         return gameScene.GameScene()
-      case enum.SceneType.AI_LEARNING:
-        return gameScene.GameScene()
+      case enum.SceneType.AI_PLAY_GAME:
+        return gameScene.GameScene(ai_play_flag=True)
   
   def set_frame_rate(self):
     elapsed_time = pygame.time.Clock().tick(define.FPS) # millsecond で返ってくる

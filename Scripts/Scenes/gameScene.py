@@ -1,4 +1,6 @@
+import os
 import pygame
+from stable_baselines3 import DQN
 from Utilities import enum
 from Utilities import define
 from Scenes import sceneBase
@@ -6,22 +8,71 @@ from Scenes import sceneManager
 from Scenes import gameManager
 
 class GameScene(sceneBase.SceneBase):
-    def __init__(self):
+    def __init__(self, ai_play_flag = False):
         self.gameManager = gameManager.GameManager()
         train_flag = False
-        self.gameManager.init(train_flag)
-        self.userGuideFont = pygame.font.Font(define.JP_FONT_PASS, define.USER_GUIDE_FONT_SIZE)
-        self.scoreFont = pygame.font.Font(define.JP_FONT_PASS, define.SCORE_TEXT_FONT_SIZE)
-        self.comboFont = pygame.font.Font(define.JP_FONT_PASS, define.COMBO_FONT_SIZE)
+        self.ai_play_flag = ai_play_flag
+        self.gameManager.init(train_flag, self.ai_play_flag)
+        self.userguide_font = pygame.font.Font(define.JP_FONT_PASS, define.USER_GUIDE_FONT_SIZE)
+        self.score_font = pygame.font.Font(define.JP_FONT_PASS, define.SCORE_TEXT_FONT_SIZE)
+        self.combo_font = pygame.font.Font(define.JP_FONT_PASS, define.COMBO_FONT_SIZE)
+        
+        if self.ai_play_flag:
+            self.ai_playing_font = pygame.font.Font(define.JP_FONT_PASS, define.AI_PLAYING_FONT_SIZE)
+            
+            # 学習済みモデルをロード
+            load_path = os.path.join(os.pardir, "Models", "dqn_agent")
+            self.model = DQN.load(load_path)
     
     def update(self):
         if self.gameManager.game_state == enum.GameState.END:
             sceneManager.SceneManager().move_Scene(enum.SceneType.SELECT)
             return
         
-        self.gameManager.update()
+        if self.ai_play_flag:
+            # 学習済みモデルで行動を選択
+            if self.gameManager.game_state == enum.GameState.FALL:
+                action, _ = self.model.predict(self.get_state(), deterministic=True)
+            else:
+                action = enum.ACTION_SPACE_TYPE.IDLE
+            self.update_key_input(action)
+            self.gameManager.update()
+        else:
+            self.gameManager.update()
+        
         self.draw()
-    
+
+    # エージェントが選択したアクションを元にキーの押下状態を更新
+    def update_key_input(self, action):
+        self.gameManager.key_input_state_is_up[:] = [False] * len(enum.KeyType)
+        match action:
+            case enum.ACTION_SPACE_TYPE.MOVE_RIGHT:
+                self.gameManager.key_input_state_is_up[enum.KeyType.D] = True
+            case enum.ACTION_SPACE_TYPE.MOVE_LEFT:
+                self.gameManager.key_input_state_is_up[enum.KeyType.A] = True
+            case enum.ACTION_SPACE_TYPE.ROTATE_RIGHT:
+                self.gameManager.key_input_state_is_up[enum.KeyType.RIGHT] = True
+            case enum.ACTION_SPACE_TYPE.ROTATE_LEFT:
+                self.gameManager.key_input_state_is_up[enum.KeyType.LEFT] = True
+            case enum.ACTION_SPACE_TYPE.HARD_DROP:
+                self.gameManager.key_input_state_is_up[enum.KeyType.W] = True
+ 
+    # エージェントが状況を理解するためのゲームデータを返す
+    def get_state(self):
+        # 観測データを辞書で返す
+        index = 0 if self.gameManager.active_mino == None else self.gameManager.active_mino.index
+        mino_type = 0 if self.gameManager.active_mino == None else self.gameManager.active_mino.mino_type
+        state = {
+            "board_matrix": self.gameManager.board_matrix,
+            "fall_mino_matrix": self.gameManager.fall_mino_matrix,
+            "rotation": index,
+            "mino_type": mino_type,
+            #"block_normalized_variance": np.array([self.block_normalized_variance], dtype=np.float16),
+            #"block_height_diff": np.array([self.block_height_diff], dtype=np.float16)
+        }
+        
+        return state
+ 
     def draw(self):
         offset_pos_x = define.GAME_SCREEN_OFFSET[0] + define.BLOCK_SIZE[0]
         offset_pos_y = define.GAME_SCREEN_OFFSET[1]
@@ -100,14 +151,14 @@ class GameScene(sceneBase.SceneBase):
         # 操作説明
         index = 0
         for text in define.USER_GUIDE_TEXT:
-            gTxt = self.userGuideFont.render(text, True, define.USER_GUIDE_TEXT_COLOR)
+            gTxt = self.userguide_font.render(text, True, define.USER_GUIDE_TEXT_COLOR)
             text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
                       (define.USER_GUIDE_TEXT_POS[0], define.USER_GUIDE_TEXT_POS[1] + (index * define.USER_GUIDE_FONT_INV)), -1, -1)
             sceneManager.SceneManager().add_draw_queue(text_tuple)
             index += 1
         
         # スコア表示
-        gTxt = self.scoreFont.render("スコア", True, define.SCORE_COLOR)
+        gTxt = self.score_font.render("スコア", True, define.SCORE_COLOR)
         text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
                       define.SCORE_TEXT_POS, -1, -1)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
@@ -122,8 +173,16 @@ class GameScene(sceneBase.SceneBase):
         # コンボ表示
         if self.gameManager.combo > 1:
             combo = self.gameManager.combo - 1
-            gTxt = self.comboFont.render("★COMBO " + str(combo), True, define.COMBO_COLOR)
+            gTxt = self.combo_font.render("★COMBO " + str(combo), True, define.COMBO_COLOR)
             text_rect = gTxt.get_rect(bottomright=define.COMBO_RIGHT_POS)
             text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
                         text_rect, -1, -1)
             sceneManager.SceneManager().add_draw_queue(text_tuple)
+        
+        # AIプレイ中表示
+        if self.ai_play_flag:
+            gTxt = self.ai_playing_font.render("AIプレイ中", True, define.AI_PLAYING_COLOR)
+            text_tuple = (enum.ObjectType.UI, 0, enum.DrawType.TEXT, gTxt, -1, -1,
+                            define.AI_PLAYING_CENTER_POS, -1, -1)
+            sceneManager.SceneManager().add_draw_queue(text_tuple)
+            

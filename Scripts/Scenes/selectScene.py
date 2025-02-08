@@ -13,7 +13,7 @@ class SelectScene(sceneBase.SceneBase):
         if (pygameManager.PygameManager().is_pressed(pygame.K_w)):
             sceneManager.SceneManager().move_Scene(enum.SceneType.GAME)
         elif (pygameManager.PygameManager().is_pressed(pygame.K_s)):
-            pass
+            sceneManager.SceneManager().move_Scene(enum.SceneType.AI_PLAY_GAME)
             
         self.draw()
         

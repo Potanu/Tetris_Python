@@ -9,8 +9,9 @@ from Objects import mino
 from Objects import clearMinoAnim
 
 class GameManager:
-    def init(self, train_flag):
+    def init(self, train_flag, ai_play_flag):
         self.train_flag = train_flag        # DQN学習フラグ
+        self.ai_play_flag = ai_play_flag    # AIプレイフラグ
         self.active_mino = None             # 降下中のミノ
         self.fall_counter = 0               # ミノの降下タイミング管理用カウンター
         self.clear_line_list = []           # 消える段
@@ -35,6 +36,7 @@ class GameManager:
         for y in range(0, define.NEXT_MINO_MAX):
             type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
             self.next_mino_list.append(mino.Mino(type))
+        self.create_mino()
         
         if self.train_flag:
             self.change_state(enum.GameState.FALL)  # 強化学習中の場合、準備画面を省略する
@@ -42,7 +44,7 @@ class GameManager:
             self.change_state(enum.GameState.READY)
         
     def update(self):
-        if not self.train_flag:
+        if not self.train_flag and not self.ai_play_flag:
             self.update_key_input()
             
         self.active_func()
@@ -216,12 +218,11 @@ class GameManager:
     def game_over(self):
         if self.train_flag:
            # 強化学習中は画面をスキップする 
-           self.init(self.train_flag)
+           self.init(self.train_flag, self.ai_play_flag)
            return
         
-        
         if self.key_input_state_is_down[enum.KeyType.SPACE]:
-            self.init(self.train_flag)
+            self.init(self.train_flag, self.ai_play_flag)
             self.change_state(enum.GameState.READY)
             return
         
@@ -306,6 +307,7 @@ class GameManager:
         
         # 降下可能かチェック
         next_mino_grid = (self.active_mino.left_upper_grid[0], self.active_mino.left_upper_grid[1] + 1)
+        
         if self.check_object(self.active_mino.matrix[self.active_mino.index], next_mino_grid):
             # 降下
             self.active_mino.move_mino(enum.MinoMoveType.FALL)
