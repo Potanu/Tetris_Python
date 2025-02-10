@@ -4,7 +4,7 @@ from enum import IntEnum
 # シーンの種別
 class SceneType(Enum):
     SELECT = 0,         # シーン選択
-    GAME = 1,           # ゲーム画面
+    GAME = 1,           # ゲーム画面z
     AI_PLAY_GAME = 2    # AIプレイ画面
  
 # オブジェクトの種別
@@ -94,9 +94,7 @@ class SeType(IntEnum):
 
 # 強化学習用のアクション定義
 class ACTION_SPACE_TYPE(IntEnum):
-    IDLE = 0,           # 何もしない
-    MOVE_RIGHT = 1,     # 右移動
-    MOVE_LEFT = 2,      # 左移動
-    ROTATE_RIGHT = 3,   # 右回転
-    ROTATE_LEFT = 4,    # 左回転
-    HARD_DROP = 5       # ハードドロップ
+    MOVE_RIGHT = 0,     # 右移動
+    MOVE_LEFT = 1,      # 左移動
+    ROTATE_RIGHT = 2,   # 右回転
+    HARD_DROP = 3       # ハードドロップ

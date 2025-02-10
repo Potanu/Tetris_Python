@@ -18,6 +18,7 @@ class GameScene(sceneBase.SceneBase):
         self.combo_font = pygame.font.Font(define.JP_FONT_PASS, define.COMBO_FONT_SIZE)
         
         if self.ai_play_flag:
+            self.ai_action_index = 0
             self.ai_playing_font = pygame.font.Font(define.JP_FONT_PASS, define.AI_PLAYING_FONT_SIZE)
             
             # 学習済みモデルをロード
@@ -30,52 +31,34 @@ class GameScene(sceneBase.SceneBase):
             return
         
         if self.ai_play_flag:
-            # 学習済みモデルで行動を選択
-            if self.gameManager.game_state == enum.GameState.FALL:
-                action, _ = self.model.predict(self.get_state(), deterministic=True)
-            else:
-                action = enum.ACTION_SPACE_TYPE.IDLE
-            self.update_key_input(action)
-            self.gameManager.update()
+            self.ai_update()
         else:
             self.gameManager.update()
         
         self.draw()
-
-    # エージェントが選択したアクションを元にキーの押下状態を更新
-    def update_key_input(self, action):
+ 
+    # 学習済モデル用のゲーム進行
+    def ai_update(self):
+        # 行動選択
         self.gameManager.key_input_state_is_up[:] = [False] * len(enum.KeyType)
-        match action:
-            case enum.ACTION_SPACE_TYPE.MOVE_RIGHT:
-                self.gameManager.key_input_state_is_up[enum.KeyType.D] = True
-            case enum.ACTION_SPACE_TYPE.MOVE_LEFT:
-                self.gameManager.key_input_state_is_up[enum.KeyType.A] = True
-            case enum.ACTION_SPACE_TYPE.ROTATE_RIGHT:
-                self.gameManager.key_input_state_is_up[enum.KeyType.RIGHT] = True
-            case enum.ACTION_SPACE_TYPE.ROTATE_LEFT:
-                self.gameManager.key_input_state_is_up[enum.KeyType.LEFT] = True
-            case enum.ACTION_SPACE_TYPE.HARD_DROP:
-                self.gameManager.key_input_state_is_up[enum.KeyType.W] = True
- 
-    # エージェントが状況を理解するためのゲームデータを返す
-    def get_state(self):
-        # 観測データを辞書で返す
-        index = 0 if self.gameManager.active_mino == None else self.gameManager.active_mino.index
-        mino_type = 0 if self.gameManager.active_mino == None else self.gameManager.active_mino.mino_type
-        state = {
-            "board_matrix": self.gameManager.board_matrix,
-            "fall_mino_matrix": self.gameManager.fall_mino_matrix,
-            "rotation": index,
-            "mino_type": mino_type,
-            #"block_normalized_variance": np.array([self.block_normalized_variance], dtype=np.float16),
-            #"block_height_diff": np.array([self.block_height_diff], dtype=np.float16)
-        }
-        
-        return state
- 
+        if self.gameManager.game_state == enum.GameState.FALL and self.gameManager.active_mino != None:
+            # 降下フェーズかつ操作ミノが生成されている状態
+            if len(self.gameManager.ai_action_list) == 0 or self.ai_action_index >= len(self.gameManager.ai_action_list):
+                # 次の行動を決定
+                action, _ = self.model.predict(self.gameManager.get_state(), deterministic=True)
+                self.gameManager.insert_action(action)
+                self.ai_action_index = 0
+            
+            if self.ai_action_index < len(self.gameManager.ai_action_list):
+                self.gameManager.key_input_state_is_up[:] = [False] * len(enum.KeyType)
+                self.gameManager.update_virtual_key_input(self.gameManager.ai_action_list[self.ai_action_index])
+                self.ai_action_index += 1
+            
+        self.gameManager.update()
+    
     def draw(self):
         offset_pos_x = define.GAME_SCREEN_OFFSET[0] + define.BLOCK_SIZE[0]
-        offset_pos_y = define.GAME_SCREEN_OFFSET[1]
+        offset_pos_y = 0
         
         # ゲーム部分の背景
         for y in range(0, define.GAME_GRID_NUM[1]):

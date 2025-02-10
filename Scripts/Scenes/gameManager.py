@@ -33,6 +33,11 @@ class GameManager:
         self.key_input_state_is_up = [False] * len(enum.KeyType)        # キーの押下状態（離した瞬間）
         self.key_input_state_is_pressed = [False] * len(enum.KeyType)   # キーの押下状態（押下中）
         
+        self.block_normalized_variance = 0.0  # ブロックの分散値
+        self.block_height_diff = 0.0    # ブロックの最大段数-平均段数
+        self.empty_block_num = 0        # 空きブロック数
+        self.ai_action_list = []        # 行動予定格納リスト
+        
         for y in range(0, define.NEXT_MINO_MAX):
             type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
             self.next_mino_list.append(mino.Mino(type))
@@ -144,7 +149,8 @@ class GameManager:
     # ラインクリア後、ブロックを下に詰める処理 
     def drop_line(self):
         if self.check_all_block_clear():
-            sceneManager.SceneManager().call_se(enum.SeType.CLEAR_ALL_BLOCK)
+            if not self.train_flag:
+                sceneManager.SceneManager().call_se(enum.SeType.CLEAR_ALL_BLOCK)
         else:
         # 全消しでなければクリアした分の段を下に詰める
             for y in range(1, define.BOARD_GRID_NUM[1] - 1):
@@ -548,3 +554,145 @@ class GameManager:
         draw_matrix(self.board_matrix, "FF")
         draw_matrix(self.fall_mino_matrix, "FF")
         draw_matrix(self.ghost_mino_matrix, define.GHOST_MINO_ALPHA)
+
+    # ==========================
+    # AI学習用
+    # ==========================
+    
+    # エージェントが状況を理解するためのゲームデータを返す
+    def get_state(self):
+        # 観測データを辞書で返す
+        index = 0 if self.active_mino == None else self.active_mino.index
+        mino_type = 0 if self.active_mino == None else self.active_mino.mino_type
+        active_mino_list = np.zeros((4, 4)) if self.active_mino == None else list(self.active_mino.matrix[0])
+        active_mino_array = np.array(active_mino_list, dtype=np.int8).squeeze()
+        state = {
+            "board_matrix": self.board_matrix,
+            "mino_matrix": active_mino_array,
+            #"fall_mino_matrix": self.fall_mino_matrix,
+            #"ghost_mino_matrix": self.ghost_mino_matrix,
+            "rotation": index,
+            "mino_type": mino_type,
+            "block_normalized_variance": np.array([self.block_normalized_variance], dtype=np.float16),
+            "block_height_diff": np.array([self.block_height_diff], dtype=np.float16),
+            "empty_block_num": np.array([self.empty_block_num], dtype=np.int8)
+        }
+        
+        return state
+    
+    # 消せるラインの段数を返す
+    def get_clear_line_num(self):
+        clear_line_num = 0
+        for y in range(0, len(self.board_matrix) - 1): # 一番下の段は固定ブロックしかないので見ない
+            is_clear = True
+            for x in range(0, len(self.board_matrix[0])):
+                if self.board_matrix[y][x] == enum.MinoType.NONE:
+                    is_clear = False
+                    break
+            
+            if is_clear:
+                clear_line_num += 1
+        
+        return clear_line_num
+
+    # ブロック設置時に発生した穴の数を返す
+    def count_empty_block_num(self):
+        pairs = set()
+        # 現在の操作ブロック各列を下から検索し、一番下に位置するブロック座標を見つけたら保存する
+        for x in range(1, define.BOARD_GRID_NUM[0] - 1):
+            for y in reversed(range(2, define.GAME_GRID_NUM[1])): # デッドラインから上と、最下段の列は無視する
+                if (self.fall_mino_matrix[y][x] > enum.MinoType.NONE):
+                    pairs.add((x,y))
+                    break
+        
+        # 操作ブロックの下にある空きブロックの数をカウントする
+        empty_block_counter = 0
+        for x, y in pairs:
+            for y_grid in range(y + 1, define.GAME_GRID_NUM[1]):
+                if (self.fall_mino_matrix[y_grid][x] > enum.MinoType.NONE):
+                    # 空きブロックでなければ次の列へ
+                    break
+                empty_block_counter += 1
+        
+        self.empty_block_num = empty_block_counter
+        return self.empty_block_num
+
+    # ブロックの分散を正規化したものを返す
+    def calculate_block_normalized_variance(self):
+        block_array = np.where(self.board_matrix == 0, self.fall_mino_matrix, self.board_matrix)
+        block_array = block_array[1:-1, 1:-1]   # 外周を削除
+        block_list = np.zeros(define.GAME_GRID_NUM[0], dtype=int)   # 列ごとのブロック数を格納
+        for x in range(0, define.GAME_GRID_NUM[0]):
+            for y in range(0, define.GAME_GRID_NUM[1] - 1):
+                if (block_array[y][x] > enum.MinoType.NONE):
+                    block_list[x] += 1
+        
+        # 分散を計算
+        variance = np.var(block_list)
+        
+        # 最大分散を計算
+        max_variance = (np.max(block_list) - np.min(block_list)) ** 2 / 4
+        
+        # 正規化分散を計算
+        normalized_variance = variance / max_variance
+        
+        self.normalized_variance = normalized_variance
+        return self.normalized_variance
+
+    # 積みあがったブロックの最大段数から平均段数を引いた値を返す
+    def count_block_height_diff(self):
+        block_array = np.where(self.board_matrix == 0, self.fall_mino_matrix, self.board_matrix)
+        block_array = block_array[1:-1, 1:-1]   # 外周を削除
+        block_num = 0   # ブロックの数
+        block_max_y_index = define.GAME_GRID_NUM[1] - 1 # 最も高いブロックのyインデックス
+        for y in range(0, define.GAME_GRID_NUM[1] - 1):
+            for x in range(0, define.GAME_GRID_NUM[0]):
+                if (block_array[y][x] > enum.MinoType.NONE):
+                    block_num += 1
+                    
+                    if y < block_max_y_index:
+                        block_max_y_index = y
+
+        max_height = define.GAME_GRID_NUM[1] - block_max_y_index
+        avg_height = block_num / define.GAME_GRID_NUM[0]
+        
+        self.block_height_diff = max_height - avg_height
+        return self.block_height_diff
+
+    # エージェントが選択したアクションを元にキーの押下状態を更新
+    def update_virtual_key_input(self, action):
+        match action:
+            case enum.ACTION_SPACE_TYPE.MOVE_RIGHT:
+                self.key_input_state_is_up[enum.KeyType.D] = True
+            case enum.ACTION_SPACE_TYPE.MOVE_LEFT:
+                self.key_input_state_is_up[enum.KeyType.A] = True
+            case enum.ACTION_SPACE_TYPE.ROTATE_RIGHT:
+                self.key_input_state_is_up[enum.KeyType.RIGHT] = True
+            case enum.ACTION_SPACE_TYPE.HARD_DROP:
+                self.key_input_state_is_up[enum.KeyType.W] = True
+
+    # エージェントの選択したアクションをリストに格納
+    def insert_action(self, action):
+        self.ai_action_list.clear()
+        move_num = (action // 4) - 4    # 左右移動（-4~4 に変換）
+        right_rotate_num = action % 4   # 右回転（0〜3）
+        
+        if move_num != 0:
+            # 左右移動
+            action_state = enum.ACTION_SPACE_TYPE.MOVE_RIGHT if move_num > 0 else enum.ACTION_SPACE_TYPE.MOVE_LEFT
+            sign = 1 if move_num > 0 else -1
+            for j in range(1, move_num * sign):
+                # 移動操作を格納
+                self.ai_action_list.append(action_state)
+        
+        if right_rotate_num > 0:
+            # 右回転
+            action_state = enum.ACTION_SPACE_TYPE.ROTATE_RIGHT
+            for j in range(1, right_rotate_num):
+                # 右回転操作を格納
+                self.ai_action_list.append(action_state)
+        
+        # 降下操作を格納
+        action_state = enum.ACTION_SPACE_TYPE.HARD_DROP
+        self.ai_action_list.append(action_state)
+        
