@@ -48,7 +48,6 @@ class GameManager:
         self.step_num = 0               # 操作回数
         self.avg_height = 0.0
         self.height_variance = 0.0
-        self.predicted_clearline_num = 0    # 消去予定ライン数
         self.total_clear_line_num = 0   # 消したライン数の合計
         
         type_max = len(enum.MinoType) - 3 if self.train_flag or self.ai_play_flag else len(enum.MinoType) - 1
@@ -589,7 +588,7 @@ class GameManager:
     # エージェントが状況を理解するためのゲームデータを返す
     def get_state(self):
         # 観測空間を定義
-        board_matrix, self.predicted_clearline_num = self.get_ai_predicted_board_matrix()
+        board_matrix = self.board_matrix.copy()
         board_matrix = board_matrix[1:-1, 1:-1]
         board_matrix[board_matrix > 0] = 1
         ghost_mino_matrix = self.ghost_mino_matrix.copy()
@@ -643,7 +642,7 @@ class GameManager:
             #height_variation, 
             np.array(
                 [self.block_num, self.under_empty_block_num, self.empty_block_rate, self.max_block_height,
-                 self.height_variance, self.predicted_clearline_num, self.total_clear_line_num, self.step_num],
+                 self.height_variance, self.get_clear_line_num(), self.total_clear_line_num, self.step_num],
             dtype=np.float32)
         ])
         
@@ -871,67 +870,4 @@ class GameManager:
                 self.key_input_state_is_up[enum.KeyType.LEFT] = True
             case enum.ACTION_SPACE_TYPE.HARD_DROP:
                 self.key_input_state_is_up[enum.KeyType.W] = True
-
-    # ボード配列（予定）を返す（時間がない+事故が怖いので共通化しない）
-    def get_ai_predicted_board_matrix(self):
-        # ライン消しが発生していない場合
-        if self.get_clear_line_num() == 0:
-            return self.board_matrix.copy(), 0
-        
-        # ライン消しが発生した場合
-        board_matrix = self.board_matrix.copy()
-        if len(self.clear_line_list) > 0:
-            # ありえないけど念のため
-            clear_line_list = self.clear_line_list
-        else:
-            if self.check_line_clear() > 0:
-                clear_line_list = self.clear_line_list
-                self.clear_line_list.clear()
-        
-        # ラインのミノを全て削除
-        for y in range(0, len(clear_line_list)):
-            for x in range(1, define.BOARD_GRID_NUM[0] - 1):
-                index_y = clear_line_list[y]
-                board_matrix[index_y][x] = enum.MinoType.NONE
-        
-        # クリアした分を下に詰める
-        if not self.check_all_block_clear():
-            for y in range(1, define.BOARD_GRID_NUM[1] - 1):
-                top_mino_index = -1
-                for x in range(1, define.BOARD_GRID_NUM[0] - 1):
-                    if board_matrix[y][x] > enum.MinoType.NONE:
-                        top_mino_index = y
-                        break
-                if top_mino_index > -1:
-                    break
-            
-            shift_down(top_mino_index)
-        
-        def shift_down(index):
-            clear_index = -1
-            for y in reversed(range(index, define.BOARD_GRID_NUM[1] - 1)):
-                is_clear = True
-                for x in range(1, define.BOARD_GRID_NUM[0] - 1):
-                    if enum.MinoType.NONE < board_matrix[y][x]:
-                        is_clear = False
-                        break
-                
-                if is_clear:
-                    clear_index = y
-                    break
-            
-            if 0 < clear_index:
-                for y in reversed(range(index, clear_index + 1)):
-                    for x in range(1, define.BOARD_GRID_NUM[0] - 1):
-                        if y == index:
-                            board_matrix[y][x] = enum.MinoType.NONE
-                        else:
-                            board_matrix[y][x] = board_matrix[y - 1][x]
-                
-                
-                
-                if index < clear_index:
-                    shift_down(index + 1)
-                    
-        return board_matrix, len(clear_line_list)
         

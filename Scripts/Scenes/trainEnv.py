@@ -126,9 +126,10 @@ class TrainEnv(gymnasium.Env):
             else:
                 reward += self.gameManager.total_clear_line_num * 10
 
-        if self.gameManager.predicted_clearline_num > 0:
+        clear_line_num = self.gameManager.get_clear_line_num()
+        if clear_line_num > 0:
             # ライン消しが発生
-            reward += self.gameManager.predicted_clearline_num * 10
+            reward += clear_line_num * 10
         
         # 経過ステップ数をチェック
         if self.gameManager.step_num <= 10:

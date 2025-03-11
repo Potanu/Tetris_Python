@@ -28,6 +28,7 @@ if is_transfer_learning:
     load_path = os.path.join(os.pardir, "Models", "ppo_agent")
     model = PPO.load(load_path)
     model.env = env
+    model.gamma = 0.98
     model.learn(total_timesteps=500000)
 else:
     # エージェントを初期化
@@ -42,7 +43,7 @@ else:
     model = PPO(
         "MultiInputPolicy",
         env,
-        learning_rate=0.0002, 
+        learning_rate=0.0001, 
         batch_size=64,        
         clip_range=0.2,       
         ent_coef=0.2,        
