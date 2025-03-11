@@ -34,8 +34,8 @@ CLEAR_ALL_BLOCK_SE = SOUND_PASS + "clear_all_block_se.mp3"   # ブロック全�
 # =========================
 # ゲーム
 # =========================
-GAME_SCREEN_OFFSET = (320, 30) # ゲームフィールドのオフセット
-BOARD_GRID_NUM = (12, 22)     # ボードのマスの数
+GAME_SCREEN_OFFSET = (320, 0) # ゲームフィールドのオフセット
+BOARD_GRID_NUM = (12, 23)     # ボードのマスの数
 GAME_GRID_NUM = (10, 21)      # ゲームボードのマスの数
 START_MINO_GRID = (4, 0)      # ミノの出現位置（左上のマス）
 BLOCK_SIZE = (30, 30)         # ブロックサイズ
@@ -49,9 +49,9 @@ GAME_OVER_GRID_Y = 2          # ゲームオーバー判定縦マス数
 NEXT_MINO_MAX = 6             # 予告ミノの最大数
 
 # 強化学習用
-NO_EMPTY_BLOCK_REWARD = 100     # 接地時に空きブロックが発生しなかった場合の報酬
-EMPTY_BLOCK_PENALTY = -1      # 空きブロックペナルティ
-GAME_OVER_PENALTY = -300     # ゲームオーバーペナルティ
+NO_EMPTY_BLOCK_REWARD = 30     # 接地時に空きブロックが発生しなかった場合の報酬
+EMPTY_BLOCK_PENALTY = 0.3     # 空きブロックペナルティ
+GAME_OVER_PENALTY = 500     # ゲームオーバーペナルティ
 ALL_BLOCK_CLEAR_REWARD = 100  # 全消し報酬
 
 # スコア

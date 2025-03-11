@@ -1,11 +1,12 @@
 from Utilities import define
 from Utilities import enum
-
+import random
 class Mino():
     def __init__(self, mino_type):
-        self.index = 0
+        self.index = 0  #random.randint(0, 3)
         self.left_upper_grid = define.START_MINO_GRID
         self.mino_type = mino_type
+        #self.mino_type = random.randint(enum.MinoType.I,enum.MinoType.O)
         self.set_mino()
     
     def set_mino(self):

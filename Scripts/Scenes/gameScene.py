@@ -1,6 +1,7 @@
 import os
 import pygame
-from stable_baselines3 import DQN
+#from stable_baselines3 import DQN
+from stable_baselines3 import PPO
 from Utilities import enum
 from Utilities import define
 from Scenes import sceneBase
@@ -18,12 +19,11 @@ class GameScene(sceneBase.SceneBase):
         self.combo_font = pygame.font.Font(define.JP_FONT_PASS, define.COMBO_FONT_SIZE)
         
         if self.ai_play_flag:
-            self.ai_action_index = 0
             self.ai_playing_font = pygame.font.Font(define.JP_FONT_PASS, define.AI_PLAYING_FONT_SIZE)
             
             # 学習済みモデルをロード
-            load_path = os.path.join(os.pardir, "Models", "dqn_agent")
-            self.model = DQN.load(load_path)
+            load_path = os.path.join(os.pardir, "Models", "ppo_agent")
+            self.model = PPO.load(load_path)
     
     def update(self):
         if self.gameManager.game_state == enum.GameState.END:
@@ -41,20 +41,19 @@ class GameScene(sceneBase.SceneBase):
     def ai_update(self):
         # 行動選択
         self.gameManager.key_input_state_is_up[:] = [False] * len(enum.KeyType)
+
         if self.gameManager.game_state == enum.GameState.FALL and self.gameManager.active_mino != None:
-            # 降下フェーズかつ操作ミノが生成されている状態
-            if len(self.gameManager.ai_action_list) == 0 or self.ai_action_index >= len(self.gameManager.ai_action_list):
-                # 次の行動を決定
-                action, _ = self.model.predict(self.gameManager.get_state(), deterministic=True)
-                self.gameManager.insert_action(action)
-                self.ai_action_index = 0
-            
-            if self.ai_action_index < len(self.gameManager.ai_action_list):
-                self.gameManager.key_input_state_is_up[:] = [False] * len(enum.KeyType)
-                self.gameManager.update_virtual_key_input(self.gameManager.ai_action_list[self.ai_action_index])
-                self.ai_action_index += 1
-            
-        self.gameManager.update()
+            # 次の行動を決定
+            state = self.gameManager.get_state()
+            action, _ = self.model.predict(state, deterministic=True)
+            if self.gameManager.step_num >= 10000:
+                action = enum.ACTION_SPACE_TYPE.HARD_DROP
+            self.gameManager.key_input_state_is_up[:] = [False] * len(enum.KeyType)
+            self.gameManager.update_virtual_key_input(action)
+            self.gameManager.update()
+            self.gameManager.key_input_state_is_up[:] = [False] * len(enum.KeyType)
+        else:
+            self.gameManager.update()
     
     def draw(self):
         offset_pos_x = define.GAME_SCREEN_OFFSET[0] + define.BLOCK_SIZE[0]
@@ -95,9 +94,10 @@ class GameScene(sceneBase.SceneBase):
        
         for index in range(0, len(self.gameManager.next_mino_list)):
             mino = self.gameManager.next_mino_list[index]
+            rotate_index = self.gameManager.next_mino_list[index].index
             for y in range(0, len(mino.matrix[0])):
                 for x in range(0, len(mino.matrix[0][0])):
-                    if mino.matrix[0][y][x] == [0]:
+                    if mino.matrix[rotate_index][y][x] == [0]:
                         continue
                     pos_x = mino_center_pos_x - (define.NEXT_MINO_SIZE * len(mino.matrix[0][0]) / 2) + (x * define.NEXT_MINO_SIZE)
                     pos_y = next_mino_start_pos[1] + (index * define.NEXT_MINO_INV_Y) + (y * define.NEXT_MINO_SIZE)

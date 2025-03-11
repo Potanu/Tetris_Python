@@ -53,11 +53,11 @@ class MinoType(IntEnum):
     NONE = 0,
     I = 1,
     O = 2,
-    S = 3,
-    Z = 4,
-    J = 5,
-    L = 6,
-    T = 7
+    J = 3,
+    L = 4,
+    T = 5,
+    S = 6,
+    Z = 7,
 
 # ミノの動き
 class MinoMoveType(Enum):
@@ -97,4 +97,5 @@ class ACTION_SPACE_TYPE(IntEnum):
     MOVE_RIGHT = 0,     # 右移動
     MOVE_LEFT = 1,      # 左移動
     ROTATE_RIGHT = 2,   # 右回転
-    HARD_DROP = 3       # ハードドロップ
+    ROTATE_LEFT = 3,    # 左回転
+    HARD_DROP = 4       # ハードドロップ
