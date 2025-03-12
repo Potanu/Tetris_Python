@@ -217,7 +217,7 @@ class GameManager:
             
             if top_mino_index < clear_index:
                 self.shift_down(top_mino_index + 1)
-   
+
     # STATE: PAUSE 
     def pause(self):
         if self.key_input_state_is_up[enum.KeyType.P]:
@@ -325,7 +325,7 @@ class GameManager:
             self.active_mino.left_upper_grid = self.ghost_mino_left_upper_grid
             self.fall_mino_matrix = self.ghost_mino_matrix
             self.fall_counter = define.DEFAULT_FALL_SPEED
-                   
+
     # ミノの降下処理
     def fall_mino(self):
         # 降下速度を取得
@@ -594,9 +594,6 @@ class GameManager:
         ghost_mino_matrix = self.ghost_mino_matrix.copy()
         ghost_mino_matrix = ghost_mino_matrix[1:-1, 1:-1]
         ghost_mino_matrix[ghost_mino_matrix > 0] = 1
-        
-        if self.game_state == enum.GameState.PROCESS_LANDING:
-            ghost_mino_matrix = np.zeros_like(ghost_mino_matrix)
         
         # 盤面の各列の高さ、最大の高さ
         column_heights, self.max_block_height = self.get_column_heights_and_max_num(board_matrix)

@@ -15,7 +15,7 @@ log_dir = '../logs/'
 os.makedirs(log_dir, exist_ok=True)
 
 # 並列化された環境を作成
-num_envs = 8
+num_envs = 12
 envs = DummyVecEnv([lambda: trainEnv.TrainEnv() for _ in range(num_envs)])
 env = VecMonitor(envs, log_dir)
 
@@ -28,15 +28,17 @@ if is_transfer_learning:
     load_path = os.path.join(os.pardir, "Models", "ppo_agent")
     model = PPO.load(load_path)
     model.env = env
-    model.gamma = 0.98
-    model.learn(total_timesteps=500000)
+    model.learning_rate = 0.0002
+    model.ent_coef = 0.1
+    model.learn(total_timesteps=100000)
+    
 else:
     # エージェントを初期化
     policy_kwargs = dict(
         features_extractor_class=CustomCNN,
         net_arch=dict(
             pi=[256, 128, 64], # ポリシーネットワーク
-            vf=[512, 512, 256, 128]  # バリューネットワーク
+            vf=[256, 128, 64]  # バリューネットワーク
         )
     )
 
@@ -44,16 +46,17 @@ else:
         "MultiInputPolicy",
         env,
         learning_rate=0.0001, 
-        batch_size=64,        
+        batch_size=128,
+        n_epochs=10,        
         clip_range=0.2,       
-        ent_coef=0.2,        
+        ent_coef=0.1,        
         gamma=0.99,  
-        gae_lambda=0.95,      
+        gae_lambda=0.95,   
         policy_kwargs=policy_kwargs,
         verbose=1)
 
 
-    model.learn(total_timesteps=500000)
+    model.learn(total_timesteps=6000000)
 
 # 学習環境の解放
 env.close()

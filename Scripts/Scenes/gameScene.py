@@ -36,7 +36,7 @@ class GameScene(sceneBase.SceneBase):
             self.gameManager.update()
         
         self.draw()
- 
+
     # 学習済モデル用のゲーム進行
     def ai_update(self):
         # 行動選択
@@ -91,7 +91,7 @@ class GameScene(sceneBase.SceneBase):
         next_mino_start_pos = [right_upper_pos[0], right_upper_pos[1] + define.NEXT_MINO_TEXT_AREA_Y]
         mino_center_pos_x = next_mino_start_pos[0] + (define.NEXT_MINO_LINE_LENGTH_X / 2)
         next_mino_line_length_y = next_mino_start_pos[1] + (len(self.gameManager.next_mino_list) * define.NEXT_MINO_INV_Y)
-       
+
         for index in range(0, len(self.gameManager.next_mino_list)):
             mino = self.gameManager.next_mino_list[index]
             rotate_index = self.gameManager.next_mino_list[index].index

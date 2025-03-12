@@ -10,6 +10,7 @@ class TrainEnv(gymnasium.Env):
             
         # 観測空間を定義
         self.observation_space = spaces.Dict({
+            # 盤面の状態
             "board": spaces.Box(
                 # ブロックの数、穴の数、空きブロック率、最大の高さ、ブロックのばらつき
                 # 消したラインの数、消したラインの数（合計）、経過ステップ数
@@ -18,38 +19,44 @@ class TrainEnv(gymnasium.Env):
                 shape=(8,),
                 dtype=np.float32
             ),
+            # 盤面のブロック配列
             "board_matrix": spaces.Box(
                 low=0,
                 high=1,
                 shape=(21,10),
                 dtype=np.float32
             ),
+            # 盤面のゴーストブロック配列
             "ghost_mino_matrix": spaces.Box(
                 low=0,
                 high=1,
                 shape=(21,10),
                 dtype=np.float32
             ),
+            # 操作ミノの状態
             "current_mino": spaces.Box(
                 # ミノのタイプ、X、Y、回転
                 low=np.array([1, -2, 0, 0]),
-                high=np.array([7, 8, 19, 3]),
+                high=np.array([5, 8, 19, 3]),
                 shape=(4,),
                 dtype=np.float32
             ),
+            # 操作ミノの配列
             "current_mino_matrix": spaces.Box(
                 low=0,
                 high=1,
                 shape=(21,10),
                 dtype=np.float32
             ),
+            # 次の操作ミノの状態
             "next_mino": spaces.Box(
                 # ミノのタイプ、X、Y、回転
                 low=np.array([1, 3, 0, 0]),
-                high=np.array([7, 3, 0, 3]),
+                high=np.array([5, 3, 0, 3]),
                 shape=(4,),
                 dtype=np.float32
             ),
+            # 次の操作ミノの配列
             "next_mino_matrix": spaces.Box(
                 low=0,
                 high=1,
@@ -58,7 +65,8 @@ class TrainEnv(gymnasium.Env):
             ),
         })
         
-        self.action_space = spaces.Discrete(5)  # 左右移動 + 左右回転 + ハードドロップ
+        # 行動空間を定義
+        self.action_space = spaces.Discrete(5)  # 右移動 + 左移動 + 右回転 + 左回転 + ハードドロップ
         
         # ゲームの初期化
         self.gameManager = gameManager.GameManager()
@@ -75,6 +83,7 @@ class TrainEnv(gymnasium.Env):
         self.old_all_empty_block_num = 0
         self.old_block_normalized_variance = 0.0
         self.old_height_variance = 0.0
+        self.old_max_block_height = 0
         return self.gameManager.get_state(), {}
     
     def step(self, action):
@@ -96,7 +105,7 @@ class TrainEnv(gymnasium.Env):
         # 状態を取得
         state = self.gameManager.get_state()
         
-         # ゲーム終了フラグを確認
+        # ゲーム終了フラグを確認
         done = self.gameManager.max_block_height >= 19 
         
         # if done:
@@ -117,20 +126,6 @@ class TrainEnv(gymnasium.Env):
     def get_reward(self, done):
         reward = 0
         
-        if done:
-            # ゲームオーバー
-            reward -= 100
-            
-            if self.gameManager.total_clear_line_num == 0:
-                reward -= 50
-            else:
-                reward += self.gameManager.total_clear_line_num * 10
-
-        clear_line_num = self.gameManager.get_clear_line_num()
-        if clear_line_num > 0:
-            # ライン消しが発生
-            reward += clear_line_num * 10
-        
         # 経過ステップ数をチェック
         if self.gameManager.step_num <= 10:
             reward += 0.5
@@ -138,26 +133,45 @@ class TrainEnv(gymnasium.Env):
             reward -= (self.gameManager.step_num - 10) * 0.1
         
         if self.gameManager.game_state != enum.GameState.PROCESS_LANDING:
-            reward -= 0.01
+            #reward -= 0.01
             return reward
+        
+        if done:
+            # ゲームオーバー
+            reward -= 50
+            
+            if self.gameManager.total_clear_line_num == 0:
+                reward -= 50
+            else:
+                reward += self.gameManager.total_clear_line_num * 10
+        
+        clear_line_num = self.gameManager.get_clear_line_num()
+        if clear_line_num > 0:
+            # ライン消しが発生
+            reward += clear_line_num * 10
         
         # 設置時
         
         # ブロックの最大の高さをチェック
-        reward += 2 - (self.gameManager.max_block_height * 0.2)
+        if self.gameManager.max_block_height <= self.old_max_block_height:
+            reward += ((self.old_max_block_height - self.gameManager.max_block_height) + 1) * 0.5
+        else:
+            reward -= (self.gameManager.max_block_height - self.old_max_block_height) * 1
+            if self.gameManager.max_block_height > 12:
+                reward -= 1
         
         # 設置したブロック以下に発生した空きブロックの数に応じて報酬・ペナルティを付与する
         if self.old_under_empty_block_num > 0:
             if self.gameManager.under_empty_block_num <= self.old_under_empty_block_num:
-                reward += ((self.old_under_empty_block_num - self.gameManager.under_empty_block_num) + 1) * 6
+                reward += ((self.old_under_empty_block_num - self.gameManager.under_empty_block_num) + 1) * 1
             else:
-                reward -= (self.gameManager.under_empty_block_num - self.old_under_empty_block_num) * 0.3
+                reward -= (self.gameManager.under_empty_block_num - self.old_under_empty_block_num) * 0.5
         
         # 空きブロック率に応じて報酬・ペナルティを付与する
         if self.gameManager.empty_block_rate > 0.3:
-            reward -= (1.0 - self.gameManager.empty_block_rate) * 0.5
+            reward -= self.gameManager.empty_block_rate * 0.5
         else:
-            reward += 0.3
+            reward += (1 - self.gameManager.empty_block_rate) * 0.5
         
         # ブロックのばらつきに応じて報酬・ペナルティを付与する
         if self.old_height_variance > 0.0:
@@ -173,5 +187,6 @@ class TrainEnv(gymnasium.Env):
         self.old_all_empty_block_num = self.gameManager.all_empty_block_num
         self.old_block_normalized_variance = self.gameManager.block_variance
         self.old_height_variance = self.gameManager.height_variance
+        self.old_max_block_height = self.gameManager.max_block_height
             
         return reward

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 class CustomCNN(BaseFeaturesExtractor):
@@ -54,7 +55,7 @@ class CustomCNN(BaseFeaturesExtractor):
     def forward(self, observations):
         # board_matrix、ghost_mino_matrix、current_mino_matrixを取得（形状: (batch, 210) → (batch, 1, 21, 10)）
         board_matrix = observations["board_matrix"].reshape(-1, 1, 21, 10)
-        ghost_mino_matrix = observations["ghost_mino_matrix"].reshape(-1, 1, 21, 10) * -1  # ゴーストを -1 に
+        ghost_mino_matrix = observations["ghost_mino_matrix"].reshape(-1, 1, 21, 10)
         current_mino_matrix = observations["current_mino_matrix"].reshape(-1, 1, 21, 10)
         board_input = torch.cat([board_matrix, ghost_mino_matrix, current_mino_matrix], dim=1)  # 3チャンネル入力
         board_features = self.cnn_board(board_input)
@@ -74,4 +75,9 @@ class CustomCNN(BaseFeaturesExtractor):
 
         # 全ての特徴を結合
         combined_features = torch.cat([board_features, mino_features, mlp_features], dim=1)
-        return self.linear(combined_features)
+        x = self.linear(combined_features)
+        
+        # Softmaxを適用して確率分布を得る（アクションの確率）
+        action_probs = F.softmax(x, dim=-1)
+        
+        return action_probs
