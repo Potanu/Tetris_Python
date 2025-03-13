@@ -8,14 +8,14 @@ import datetime
 from customCnn import CustomCNN
 from Scenes import trainEnv
 
-is_transfer_learning = False     # 転移学習フラグ
+is_transfer_learning = True     # 転移学習フラグ
 
 # ログフォルダの準備
 log_dir = '../logs/'
 os.makedirs(log_dir, exist_ok=True)
 
 # 並列化された環境を作成
-num_envs = 12
+num_envs = 16
 envs = DummyVecEnv([lambda: trainEnv.TrainEnv() for _ in range(num_envs)])
 env = VecMonitor(envs, log_dir)
 
@@ -26,16 +26,41 @@ if is_transfer_learning:
     # 転移学習
     # 学習済みモデルをロード
     load_path = os.path.join(os.pardir, "Models", "ppo_agent")
-    model = PPO.load(load_path)
-    model.env = env
-    model.learning_rate = 0.0002
-    model.ent_coef = 0.1
-    model.learn(total_timesteps=100000)
+    old_model = PPO.load(load_path)
     
+    # 新しいハイパーパラメータ設定
+    policy_kwargs = dict(
+        net_arch=dict(
+            pi=[256, 128, 64],  # ポリシーネットワーク
+            vf=[256, 128, 64]  # バリューネットワーク
+        )
+    )
+
+    # 新しいPPOインスタンスを作成
+    model = PPO(
+        "MultiInputPolicy",
+        env,  # 新しい環境
+        learning_rate=0.0003,  
+        batch_size=512,
+        n_epochs=20,
+        clip_range=0.2,
+        ent_coef=0.3,
+        gamma=0.99,
+        gae_lambda=0.95,
+        policy_kwargs=policy_kwargs,
+        verbose=1
+    )
+
+    # 既存のモデルを新しいモデルに引き継ぐ
+    model.set_parameters(old_model.get_parameters())  # パラメータの引き継ぎ
+
+    # 追加学習
+    model.learn(total_timesteps=500000, reset_num_timesteps=False)
+
 else:
     # エージェントを初期化
     policy_kwargs = dict(
-        features_extractor_class=CustomCNN,
+        #features_extractor_class=CustomCNN,
         net_arch=dict(
             pi=[256, 128, 64], # ポリシーネットワーク
             vf=[256, 128, 64]  # バリューネットワーク
@@ -45,18 +70,18 @@ else:
     model = PPO(
         "MultiInputPolicy",
         env,
-        learning_rate=0.0001, 
+        learning_rate=0.0003, 
         batch_size=128,
         n_epochs=10,        
         clip_range=0.2,       
-        ent_coef=0.1,        
+        ent_coef=0.2,        
         gamma=0.99,  
         gae_lambda=0.95,   
         policy_kwargs=policy_kwargs,
         verbose=1)
 
 
-    model.learn(total_timesteps=6000000)
+    model.learn(total_timesteps=500000)
 
 # 学習環境の解放
 env.close()
@@ -64,6 +89,8 @@ env.close()
 # 学習済みモデルを保存
 save_path = os.path.join(os.pardir, "Models", "ppo_agent")
 model.save(save_path)
+save_path2 = os.path.join(os.pardir, "Models", "ppo_agent_learned")
+model.save(save_path2)
 
 end_time = datetime.datetime.now()
 print("開始時刻:", start_time.strftime("%Y-%m-%d %H:%M:%S"))

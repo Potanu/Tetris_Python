@@ -22,7 +22,7 @@ class GameScene(sceneBase.SceneBase):
             self.ai_playing_font = pygame.font.Font(define.JP_FONT_PASS, define.AI_PLAYING_FONT_SIZE)
             
             # 学習済みモデルをロード
-            load_path = os.path.join(os.pardir, "Models", "ppo_agent")
+            load_path = os.path.join(os.pardir, "Models", "ppo_agent_learned")
             self.model = PPO.load(load_path)
     
     def update(self):
@@ -46,7 +46,7 @@ class GameScene(sceneBase.SceneBase):
             # 次の行動を決定
             state = self.gameManager.get_state()
             action, _ = self.model.predict(state, deterministic=True)
-            if self.gameManager.step_num >= 10000:
+            if self.gameManager.step_num >= 1000:
                 action = enum.ACTION_SPACE_TYPE.HARD_DROP
             self.gameManager.key_input_state_is_up[:] = [False] * len(enum.KeyType)
             self.gameManager.update_virtual_key_input(action)

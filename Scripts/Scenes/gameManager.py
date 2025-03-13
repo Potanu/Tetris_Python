@@ -644,14 +644,14 @@ class GameManager:
         ])
         
         board_matrix_observation = np.array(
-            #np.array(board_matrix).flatten().tolist(),
-            board_matrix,
+            np.array(board_matrix).flatten().tolist(),
+            #board_matrix,
             dtype=np.float32
         )
         
         ghost_mino_matrix_observation = np.array(
-            #np.array(ghost_mino_matrix).flatten().tolist(),
-            ghost_mino_matrix,
+            np.array(ghost_mino_matrix).flatten().tolist(),
+            #ghost_mino_matrix,
             dtype=np.float32
         )
         
@@ -661,7 +661,8 @@ class GameManager:
         )
         
         current_mino_matrix_observation = np.array(
-            current_mino_matrix,
+            np.array(current_mino_matrix).flatten().tolist(),
+            #current_mino_matrix,
             dtype=np.float32
         )
         
@@ -676,13 +677,14 @@ class GameManager:
         )
         
         state = {
+            "matrix" : np.concatenate([np.array(board_matrix).flatten(), np.array(ghost_mino_matrix).flatten(), np.array(current_mino_matrix).flatten()], axis=0),
             "board" : board_observation,
-            "board_matrix" : board_matrix_observation,
-            "ghost_mino_matrix" : ghost_mino_matrix_observation,
+            #"board_matrix" : board_matrix_observation,
+            #"ghost_mino_matrix" : ghost_mino_matrix_observation,
             "current_mino" : current_mino_observation,
-            "current_mino_matrix" : current_mino_matrix_observation,
-            "next_mino" : next_mino_observation,
-            "next_mino_matrix" : next_mino_matrix_observation,
+            #"current_mino_matrix" : current_mino_matrix_observation,
+            #"next_mino" : next_mino_observation,
+            #"next_mino_matrix" : next_mino_matrix_observation,
         }
         
         return state

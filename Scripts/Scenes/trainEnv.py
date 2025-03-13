@@ -10,27 +10,19 @@ class TrainEnv(gymnasium.Env):
             
         # 観測空間を定義
         self.observation_space = spaces.Dict({
+            "matrix" : spaces.Box(
+                low=0,
+                high=1,
+                shape=(630,),  # 21* 10 * 3 のサイズに変更
+                dtype=np.float32
+            ),
             # 盤面の状態
             "board": spaces.Box(
                 # ブロックの数、穴の数、空きブロック率、最大の高さ、ブロックのばらつき
                 # 消したラインの数、消したラインの数（合計）、経過ステップ数
                 low=np.array([0] + [0] + [0] + [0] + [0] + [0] + [0] + [0]),
-                high=np.array([200] + [200] + [1] + [20] + [100] + [4] + [1000] + [10000]),
+                high=np.array([200] + [200] + [1] + [20] + [100] + [4] + [1000] + [1000]),
                 shape=(8,),
-                dtype=np.float32
-            ),
-            # 盤面のブロック配列
-            "board_matrix": spaces.Box(
-                low=0,
-                high=1,
-                shape=(21,10),
-                dtype=np.float32
-            ),
-            # 盤面のゴーストブロック配列
-            "ghost_mino_matrix": spaces.Box(
-                low=0,
-                high=1,
-                shape=(21,10),
                 dtype=np.float32
             ),
             # 操作ミノの状態
@@ -41,28 +33,21 @@ class TrainEnv(gymnasium.Env):
                 shape=(4,),
                 dtype=np.float32
             ),
-            # 操作ミノの配列
-            "current_mino_matrix": spaces.Box(
-                low=0,
-                high=1,
-                shape=(21,10),
-                dtype=np.float32
-            ),
-            # 次の操作ミノの状態
-            "next_mino": spaces.Box(
-                # ミノのタイプ、X、Y、回転
-                low=np.array([1, 3, 0, 0]),
-                high=np.array([5, 3, 0, 3]),
-                shape=(4,),
-                dtype=np.float32
-            ),
-            # 次の操作ミノの配列
-            "next_mino_matrix": spaces.Box(
-                low=0,
-                high=1,
-                shape=(4,4),
-                dtype=np.float32
-            ),
+            # # 次の操作ミノの状態
+            # "next_mino": spaces.Box(
+            #     # ミノのタイプ、X、Y、回転
+            #     low=np.array([1, 3, 0, 0]),
+            #     high=np.array([2, 3, 0, 3]),
+            #     shape=(4,),
+            #     dtype=np.float32
+            # ),
+            # # 次の操作ミノの配列
+            # "next_mino_matrix": spaces.Box(
+            #     low=0,
+            #     high=1,
+            #     shape=(16,),
+            #     dtype=np.float32
+            # ),
         })
         
         # 行動空間を定義
@@ -90,7 +75,7 @@ class TrainEnv(gymnasium.Env):
         tmp_action = action
         while (True):
             if self.gameManager.game_state == enum.GameState.FALL and self.gameManager.active_mino != None:
-                if self.gameManager.step_num >= 10000:
+                if self.gameManager.step_num >= 1000:
                     tmp_action = enum.ACTION_SPACE_TYPE.HARD_DROP
                 
                 # ゲーム進行
@@ -165,11 +150,11 @@ class TrainEnv(gymnasium.Env):
             if self.gameManager.under_empty_block_num <= self.old_under_empty_block_num:
                 reward += ((self.old_under_empty_block_num - self.gameManager.under_empty_block_num) + 1) * 1
             else:
-                reward -= (self.gameManager.under_empty_block_num - self.old_under_empty_block_num) * 0.5
+                reward -= (self.gameManager.under_empty_block_num - self.old_under_empty_block_num) * 2
         
         # 空きブロック率に応じて報酬・ペナルティを付与する
         if self.gameManager.empty_block_rate > 0.3:
-            reward -= self.gameManager.empty_block_rate * 0.5
+            reward -= self.gameManager.empty_block_rate * 1
         else:
             reward += (1 - self.gameManager.empty_block_rate) * 0.5
         

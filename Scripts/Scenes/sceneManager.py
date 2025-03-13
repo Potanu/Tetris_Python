@@ -133,3 +133,6 @@ class SceneManager(singleton.Singleton):
       text_tuple = (enum.ObjectType.DEBUG, 0, enum.DrawType.TEXT, gTxt, -1, -1, start_pos, -1, -1)
       self.add_draw_queue(text_tuple)
       self.debug_text_count += 1
+
+  def exit(self):
+    self.active_scene.exit()
