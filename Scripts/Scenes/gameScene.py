@@ -22,7 +22,7 @@ class GameScene(sceneBase.SceneBase):
             self.ai_playing_font = pygame.font.Font(define.JP_FONT_PASS, define.AI_PLAYING_FONT_SIZE)
             
             # 学習済みモデルをロード
-            load_path = os.path.join(os.pardir, "Models", "ppo_agent_learned")
+            load_path = os.path.join(os.pardir, "Models", "ppo_agent")
             self.model = PPO.load(load_path)
     
     def update(self):

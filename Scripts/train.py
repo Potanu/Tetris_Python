@@ -5,17 +5,16 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
-from customCnn import CustomCNN
 from Scenes import trainEnv
 
-is_transfer_learning = True     # 転移学習フラグ
+is_transfer_learning = False     # 転移学習フラグ
 
 # ログフォルダの準備
 log_dir = '../logs/'
 os.makedirs(log_dir, exist_ok=True)
 
 # 並列化された環境を作成
-num_envs = 16
+num_envs = 8
 envs = DummyVecEnv([lambda: trainEnv.TrainEnv() for _ in range(num_envs)])
 env = VecMonitor(envs, log_dir)
 
@@ -89,8 +88,6 @@ env.close()
 # 学習済みモデルを保存
 save_path = os.path.join(os.pardir, "Models", "ppo_agent")
 model.save(save_path)
-save_path2 = os.path.join(os.pardir, "Models", "ppo_agent_learned")
-model.save(save_path2)
 
 end_time = datetime.datetime.now()
 print("開始時刻:", start_time.strftime("%Y-%m-%d %H:%M:%S"))

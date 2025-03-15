@@ -48,12 +48,6 @@ SPEED_UP_INTERVAL = 1         # レベルアップ時の速度上昇量
 GAME_OVER_GRID_Y = 2          # ゲームオーバー判定縦マス数
 NEXT_MINO_MAX = 6             # 予告ミノの最大数
 
-# 強化学習用
-NO_EMPTY_BLOCK_REWARD = 30     # 接地時に空きブロックが発生しなかった場合の報酬
-EMPTY_BLOCK_PENALTY = 0.3     # 空きブロックペナルティ
-GAME_OVER_PENALTY = 500     # ゲームオーバーペナルティ
-ALL_BLOCK_CLEAR_REWARD = 100  # 全消し報酬
-
 # スコア
 SCORE_LIST = [
     100, # 1段消し

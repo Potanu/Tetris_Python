@@ -35,24 +35,14 @@ class GameManager:
         
         # AIプレイ用
         self.ai_play_flag = ai_play_flag    # AIプレイフラグ
-        self.block_variance = 0.0  # ブロックの分散値
-        self.block_height_normalized_variance = 0.0  # ブロックの高さの分散値
-        self.block_height_diff = 0.0    # ブロックの最大段数-平均段数
         self.under_empty_block_num = 0  # 空きブロック数
-        self.block_num = 0              # ブロックの数
-        self.empty_block_rate = 0.0     # 空きブロック数 / ブロックの数
-        self.all_empty_block_num = 0  # 空きブロック数
         self.max_block_height = 0       # ブロックの最大高さ
-        self.min_block_height = 0       # ブロックの最小高さ
-        self.turn_num = 0               # 経過ターン数
         self.step_num = 0               # 操作回数
-        self.avg_height = 0.0
-        self.height_variance = 0.0
+        self.height_variance = 0.0      # 高さの分散
         self.total_clear_line_num = 0   # 消したライン数の合計
         
-        type_max = len(enum.MinoType) - 3 if self.train_flag or self.ai_play_flag else len(enum.MinoType) - 1
         for y in range(0, define.NEXT_MINO_MAX):
-            type = random.randint(enum.MinoType.NONE + 1, type_max)
+            type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
             self.next_mino_list.append(mino.Mino(type))
         self.create_mino()
         
@@ -95,7 +85,7 @@ class GameManager:
         text_tuple = (enum.ObjectType.UI, 11, enum.DrawType.TEXT, gTxt, -1, -1, text_rect, -1, -1)
         sceneManager.SceneManager().add_draw_queue(text_tuple)
         self.ready_counter -= 1
-   
+
     # STATE: FALL     
     def fall(self):
         if self.active_mino == None:
@@ -466,8 +456,7 @@ class GameManager:
         for index in range(1, len(self.next_mino_list)):
             self.next_mino_list[index - 1] = self.next_mino_list[index]
             
-        type_max = len(enum.MinoType) - 3 if self.train_flag or self.ai_play_flag else len(enum.MinoType) - 1
-        next_type = random.randint(enum.MinoType.NONE + 1, type_max)
+        next_type = random.randint(enum.MinoType.NONE + 1, len(enum.MinoType) - 1)
         self.next_mino_list[len(self.next_mino_list) - 1] = mino.Mino(next_type)
     
     # ステート変更
@@ -587,104 +576,64 @@ class GameManager:
     
     # エージェントが状況を理解するためのゲームデータを返す
     def get_state(self):
-        # 観測空間を定義
+        # 盤面マトリックス
         board_matrix = self.board_matrix.copy()
         board_matrix = board_matrix[1:-1, 1:-1]
         board_matrix[board_matrix > 0] = 1
+        
+        # ゴーストミノマトリックス
         ghost_mino_matrix = self.ghost_mino_matrix.copy()
         ghost_mino_matrix = ghost_mino_matrix[1:-1, 1:-1]
         ghost_mino_matrix[ghost_mino_matrix > 0] = 1
         
-        # 盤面の各列の高さ、最大の高さ
-        column_heights, self.max_block_height = self.get_column_heights_and_max_num(board_matrix)
-        
-        # 隣り合う高さの差
-        height_variation = np.abs(np.diff(column_heights))
-        #height_variation_padded = np.append(np.diff(column_heights), 0)
-        
-        # ブロックの数、空きブロックの数
-        self.block_num, self.under_empty_block_num = self.get_block_num_and_empty_block_num(board_matrix)
-        # 空きブロック率（ひとまず４桁に丸める）
-        self.empty_block_rate = 0.0
-        if self.under_empty_block_num > 0 and self.block_num > 0:
-            self.empty_block_rate = round(self.under_empty_block_num  / (self.under_empty_block_num + self.block_num), 4)
-        
-        # 平均の高さ、高さのばらつき
-        self.avg_height = np.mean(column_heights)
-        #self.height_variance = np.var(column_heights)
-        self.height_variance = self.calculate_block_variance(board_matrix)
-        
-        # 現在のミノ情報
-        current_mino_type = self.active_mino.mino_type
-        current_mino_pos_x = self.active_mino.left_upper_grid[0] - 1
-        current_mino_pos_y = self.active_mino.left_upper_grid[1]
-        current_mino_rotation = self.active_mino.index
-        # current_mino_matrix = np.array(self.active_mino.matrix[self.active_mino.index]).flatten().tolist() # 一次元ベクトルにフラット化
+        # 操作ミノマトリックス
         current_mino_matrix = self.fall_mino_matrix.copy()
         current_mino_matrix = current_mino_matrix[1:-1, 1:-1]
         current_mino_matrix[current_mino_matrix > 0] = 1
-        #current_mino_matrix = np.array(self.active_mino.matrix[self.active_mino.index]).reshape(4, 4)
         
-        # 次のミノ情報
-        next_mino_type = self.next_mino_list[0].mino_type
-        next_mino_pos_x = self.next_mino_list[0].left_upper_grid[0] - 1
-        next_mino_pos_y = self.next_mino_list[0].left_upper_grid[1]
-        next_mino_rotation = 0
-        # next_mino_matrix = np.array(self.next_mino_list[0].matrix[0]).flatten().tolist()    # 一次元ベクトルにフラット化
-        next_mino_matrix = np.array(self.next_mino_list[0].matrix[0]).reshape(4, 4)
-        # すべての特徴量を結合して1次元配列にする
-        board_observation = np.concatenate([
-            #column_heights,
-            #holes, 
-            #height_variation, 
-            np.array(
-                [self.block_num, self.under_empty_block_num, self.empty_block_rate, self.max_block_height,
-                 self.height_variance, self.get_clear_line_num(), self.total_clear_line_num, self.step_num],
-            dtype=np.float32)
-        ])
+        # 盤面の各列の高さ
+        column_heights = self.get_column_heights(board_matrix)
         
-        board_matrix_observation = np.array(
-            np.array(board_matrix).flatten().tolist(),
-            #board_matrix,
+        # 空きブロックの数
+        self.under_empty_block_num = self.get_empty_block_num(board_matrix)
+        
+        # 最大の高さ、最小の高さ、平均の高さ、高さの分散
+        self.max_block_height = np.max(column_heights)
+        min_block_height = np.min(column_heights)
+        average_height = np.mean(column_heights)
+        self.height_variance = np.var(column_heights)
+        
+        # 現在のミノ情報
+        current_mino_type = self.active_mino.mino_type
+        current_mino_pos_x = (self.active_mino.left_upper_grid[0] - 1) + 2  # エージェントが理解しやすい数字になるよう調整
+        current_mino_pos_y = self.active_mino.left_upper_grid[1]
+        current_mino_rotation = self.active_mino.index
+        
+        # マトリックス情報
+        matrix_oobservation = np.concatenate([
+            np.array(board_matrix).flatten(),
+            np.array(ghost_mino_matrix).flatten(),
+            np.array(current_mino_matrix).flatten()
+            ],axis=0
+        )
+        
+        # ボード情報
+        board_observation = np.array(
+            [ self.under_empty_block_num, self.max_block_height, min_block_height, average_height,
+                self.height_variance, self.get_clear_line_num(), self.total_clear_line_num, self.step_num],
             dtype=np.float32
         )
         
-        ghost_mino_matrix_observation = np.array(
-            np.array(ghost_mino_matrix).flatten().tolist(),
-            #ghost_mino_matrix,
-            dtype=np.float32
-        )
-        
+        # 操作ミノ情報
         current_mino_observation = np.array(
             [current_mino_type, current_mino_pos_x, current_mino_pos_y, current_mino_rotation],
             dtype=np.float32
         )
         
-        current_mino_matrix_observation = np.array(
-            np.array(current_mino_matrix).flatten().tolist(),
-            #current_mino_matrix,
-            dtype=np.float32
-        )
-        
-        next_mino_observation = np.array(
-            [next_mino_type, next_mino_pos_x, next_mino_pos_y, next_mino_rotation],
-            dtype=np.float32
-        )
-        
-        next_mino_matrix_observation = np.array(
-            next_mino_matrix,
-            dtype=np.float32
-        )
-        
         state = {
-            "matrix" : np.concatenate([np.array(board_matrix).flatten(), np.array(ghost_mino_matrix).flatten(), np.array(current_mino_matrix).flatten()], axis=0),
+            "matrix" : matrix_oobservation,
             "board" : board_observation,
-            #"board_matrix" : board_matrix_observation,
-            #"ghost_mino_matrix" : ghost_mino_matrix_observation,
             "current_mino" : current_mino_observation,
-            #"current_mino_matrix" : current_mino_matrix_observation,
-            #"next_mino" : next_mino_observation,
-            #"next_mino_matrix" : next_mino_matrix_observation,
         }
         
         return state
@@ -704,157 +653,32 @@ class GameManager:
         
         return clear_line_num
 
-    # ブロック・空きブロックの数を返す
-    def get_block_num_and_empty_block_num(self, board_matrix):
-        block_num = 0
+    # 各ブロック列の最大の高さを返す(board_matrix: 壁除外前提)
+    def get_column_heights(self, board_matrix):
+        column_heights = [0] * len(board_matrix[0])
+        for x in range(0, len(board_matrix[0])):
+            for y in range(0, len(board_matrix)):
+                if board_matrix[y][x] > enum.MinoType.NONE:
+                    column_heights[x] = len(board_matrix) - y
+                    break
+        return column_heights
+    
+    # ブロック・空きブロックの数を返す(board_matrix: 壁除外前提)
+    def get_empty_block_num(self, board_matrix):
         empty_block_num = 0
         
-        # 各列ごとにその列の最大の高さ以下のブロック・空きブロック数をカウントする
+        # 各列ごとにその列の最大の高さ以下のブロック数をカウントする
         for x in range(0, len(board_matrix[0])):
             check_flag = False  # マスを上から見て行ってブロックを発見したらTrueになる
             for y in range(0, len(board_matrix)):
                 if check_flag:
                     if board_matrix[y][x] == enum.MinoType.NONE:
                         empty_block_num += 1
-                    else:
-                        block_num += 1
                 else:
                     if board_matrix[y][x] > enum.MinoType.NONE:
                         check_flag = True
-                        block_num += 1
     
-        return block_num, empty_block_num
-
-    # 各ブロック列の最大の高さと最も高いブロックの高さを返す
-    def get_column_heights_and_max_num(self, board_matrix):
-        column_heights = [0] * len(board_matrix[0])
-        max_num = 0
-        for x in range(0, len(board_matrix[0])):
-            for y in range(0, len(board_matrix)):
-                if board_matrix[y][x] > enum.MinoType.NONE:
-                    column_heights[x] = len(board_matrix) - y
-                    if max_num < column_heights[x]:
-                        max_num = column_heights[x]
-                    break
-        return column_heights, max_num
-    
-    # 全体的な空きブロックの数を返す
-    def count_all_empty_block_num(self):
-        all_array = self.board_matrix.copy()
-        board_array = all_array[1:-1, 1:-1]
-        empty_block_num = 0
-
-        # 最大のブロックの高さ以下の空きブロック数をカウントする
-        check_flag = False
-        for y in range(0, len(board_array)):
-            for x in range(0, len(board_array[0])):
-                if check_flag:
-                    if board_array[y][x] == enum.MinoType.NONE:
-                        empty_block_num += 1
-                else:
-                    if board_array[y][x] > enum.MinoType.NONE:
-                        check_flag = True
-                        break
-        self.all_empty_block_num = empty_block_num
-        return self.all_empty_block_num        
-        
-    # ブロックの分散を返す(board_matrixは外周削除済みを想定)
-    def calculate_block_variance(self, board_matrix):
-        block_array = board_matrix.copy()
-        block_list = np.zeros(define.GAME_GRID_NUM[0], dtype=int)   # 列ごとのブロック数を格納
-        for x in range(0, define.GAME_GRID_NUM[0]):
-            for y in range(0, define.GAME_GRID_NUM[1] - 1):
-                if (block_array[y][x] > enum.MinoType.NONE):
-                    block_list[x] += 1
-        
-        # 分散を計算
-        self.block_variance = np.var(block_list)
-        
-        return self.block_variance
-
-    def calculate_block_height_normalized_variance(self):
-        block_array = self.board_matrix.copy()
-        block_array = block_array[1:-1, 1:-1]   # 外周を削除
-        
-        # 分散を求める
-        num_columns = define.GAME_GRID_NUM[0]  # 列の数
-        column_heights = [0] * num_columns  # 各列のブロック高さを格納
-        for x in range(0, define.GAME_GRID_NUM[0]):
-             for y in range(0, define.GAME_GRID_NUM[1] - 1):
-                 if (block_array[y][x] > enum.MinoType.NONE):
-                     column_heights[x] = define.GAME_GRID_NUM[1] - y
-                     break
-        
-        # 平均値を計算
-        mean_height = np.mean(column_heights)
-        
-        # (各値 - 平均) を計算して2乗
-        squared_diffs = (np.array(column_heights) - mean_height) ** 2
-        
-        # 2乗した値の平均を求める（分散）
-        variance = np.mean(squared_diffs)
-        
-        # 最大分散を計算
-        column_heights_max = [0] * (define.GAME_GRID_NUM[0] - 1) + [define.GAME_GRID_NUM[1]]
-        mean_height_max = np.mean(column_heights_max)
-        squared_diffs_max = (np.array(column_heights_max) - mean_height_max) ** 2
-        max_variance = np.mean(squared_diffs_max)
-        
-        # 分散を正規化（0～1の範囲）
-        normalized_variance = variance / max_variance
-        
-        self.block_height_normalized_variance = normalized_variance
-        return self.block_height_normalized_variance
-        
-    # 積みあがったブロックの最大段数から平均段数を引いた値を返す
-    def count_block_height_diff(self):
-        block_array = self.board_matrix.copy()
-        block_array = block_array[1:-1, 1:-1]   # 外周を削除
-        block_num = 0   # ブロックの数
-        block_max_y_index = define.GAME_GRID_NUM[1] - 1 # 最も高いブロックのyインデックス
-        for y in range(0, define.GAME_GRID_NUM[1] - 1):
-            for x in range(0, define.GAME_GRID_NUM[0]):
-                if (block_array[y][x] > enum.MinoType.NONE):
-                    block_num += 1
-                    
-                    if y < block_max_y_index:
-                        block_max_y_index = y
-
-        max_height = define.GAME_GRID_NUM[1] - block_max_y_index
-        avg_height = block_num / define.GAME_GRID_NUM[0]
-        
-        self.block_height_diff = max_height - avg_height
-        return self.block_height_diff
-
-    # 最も高いブロックの高さを返す
-    def count_max_block_height(self, board_matrix):
-        block_array = board_matrix.copy()
-        block_array = block_array[1:-1, 1:-1]   # 外周を削除
-        block_max_y_index = define.GAME_GRID_NUM[1] # 最も高いブロックのyインデックス
-        for x in range(0, define.GAME_GRID_NUM[0]):
-            for y in range(0, define.GAME_GRID_NUM[1] - 1):
-                if block_array[y][x] > enum.MinoType.NONE:
-                    if y < block_max_y_index:
-                        block_max_y_index = y
-                        break
-
-        self.max_block_height = define.GAME_GRID_NUM[1] - block_max_y_index
-        return self.max_block_height
-    
-    # 最も低いブロックの高さを返す
-    def count_min_block_height(self):
-        block_array = self.board_matrix.copy()
-        block_array = block_array[1:-1, 1:-1]   # 外周を削除
-        block_min_y_index = 0 # 最も低いブロックのyインデックス
-        for x in range(0, define.GAME_GRID_NUM[0]):
-            for y in range(0, define.GAME_GRID_NUM[1] - 1):
-                if block_array[y][x] > enum.MinoType.NONE:
-                    if y > block_min_y_index:
-                        block_min_y_index = y
-                        break
-
-        self.min_block_height = define.GAME_GRID_NUM[1] - block_min_y_index
-        return self.min_block_height
+        return empty_block_num
 
     # エージェントが選択したアクションを元にキーの押下状態を更新
     def update_virtual_key_input(self, action):
